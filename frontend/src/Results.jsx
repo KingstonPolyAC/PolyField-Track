@@ -751,6 +751,7 @@ function Results() {
               <div>
                 <button className="btn btn-primary mx-1" onClick={() => navigate("/")}>Back</button>
                 <button className="btn btn-primary mx-1" onClick={() => navigate("/athlete")} title="Athlete Search">&#128269;</button>
+                <button className="btn btn-primary mx-1" onClick={() => navigate("/speed")} title="Speed Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style={{verticalAlign:'middle'}}><path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Z"/><path d="M8 4a.5.5 0 0 1 .5.5v3.793l2.354 2.353a.5.5 0 0 1-.708.708L7.854 9.061A.5.5 0 0 1 7.5 8.5v-4A.5.5 0 0 1 8 4Z" transform="rotate(-45 8 8)"/></svg></button>
               </div>
 
               {/* Desktop-only controls */}

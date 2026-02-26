@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import AppWrapper from './AppWrapper';
 import Results from './Results';
 import AthleteBoard from './AthleteBoard';
+import Speed from './Speed';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './style.css';
 
@@ -26,6 +27,7 @@ root.render(
         <Route path="/" element={<HomeRoute />} />
         <Route path="/results" element={<Results />} />
         <Route path="/athlete" element={<AthleteBoard />} />
+        <Route path="/speed" element={<Speed />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>
