@@ -141,6 +141,16 @@ function App() {
   const [showBibs, setShowBibs] = useState(false);
   const [showStats, setShowStats] = useState(false);
 
+  // === REFS for always-current values in syncDisplayState ===
+  const layoutThemeRef = useRef(layoutTheme);
+  const showBibRef = useRef(showBib);
+  const rotationModeRef = useRef(rotationMode);
+  const currentLifDataRef = useRef(currentLifData);
+  useEffect(() => { layoutThemeRef.current = layoutTheme; }, [layoutTheme]);
+  useEffect(() => { showBibRef.current = showBib; }, [showBib]);
+  useEffect(() => { rotationModeRef.current = rotationMode; }, [rotationMode]);
+  useEffect(() => { currentLifDataRef.current = currentLifData; }, [currentLifData]);
+
   // === DEBUG STATE ===
   const [debugLog, setDebugLog] = useState([]);
   
@@ -268,28 +278,22 @@ function App() {
       const payload = {
         mode: mode,
         activeText: text || '',
-        imageBase64: imageBase64 || ''
+        imageBase64: imageBase64 || '',
+        rotationMode: rotation !== null ? rotation : rotationModeRef.current,
+        layoutTheme: layoutThemeRef.current,
+        showBib: showBibRef.current,
       };
-      // Include rotation mode if provided, or use current rotation mode
-      if (rotation !== null) {
-        payload.rotationMode = rotation;
-      } else {
-        payload.rotationMode = rotationMode;
-      }
       // Include current LIF if provided, or use current LIF data
       if (lifData !== null) {
         payload.currentLIF = lifData;
-      } else if (currentLifData) {
-        payload.currentLIF = currentLifData;
+      } else if (currentLifDataRef.current) {
+        payload.currentLIF = currentLifDataRef.current;
       }
-      // Include layout theme and bib toggle
-      payload.layoutTheme = layoutTheme;
-      payload.showBib = showBib;
       console.log('[Desktop] Syncing display state:', {
         mode: payload.mode,
-        activeText: payload.activeText,
-        activeTextLength: payload.activeText.length,
         rotationMode: payload.rotationMode,
+        layoutTheme: payload.layoutTheme,
+        showBib: payload.showBib,
         currentLIF: payload.currentLIF?.eventName || 'none'
       });
       await fetch(`${baseUrl}/display-state`, {
@@ -669,22 +673,15 @@ function App() {
         currentActiveText: activeText
       });
 
-      // Update rotation mode if different
-      if (state.rotationMode && state.rotationMode !== rotationMode) {
+      // Always apply server state — React skips re-render if value unchanged
+      if (state.rotationMode) {
         setRotationMode(state.rotationMode);
-        addDebugLog(`Rotation mode synced from server: ${state.rotationMode}`);
       }
-
-      // Update layout theme if different
-      if (state.layoutTheme && state.layoutTheme !== layoutTheme) {
+      if (state.layoutTheme) {
         setLayoutTheme(state.layoutTheme);
-        addDebugLog(`Layout theme synced from server: ${state.layoutTheme}`);
       }
-
-      // Update show bib setting
-      if (state.showBib !== undefined && state.showBib !== showBib) {
+      if (state.showBib !== undefined) {
         setShowBib(state.showBib);
-        addDebugLog(`Show bib synced from server: ${state.showBib}`);
       }
 
       // Update display mode to match server - always sync to ensure UI reflects server state
@@ -806,7 +803,7 @@ function App() {
     const hostname = window.location.hostname;
     const isDesktopApp = hostname === '' || hostname === 'wails.localhost' || window.location.protocol === 'wails:';
     if (isDesktopApp && rotationMode) {
-      syncDisplayState(displayMode, activeText, linkedImage, rotationMode);
+      syncDisplayState(displayMode, activeText, linkedImage);
       addDebugLog(`Syncing rotation mode to server: ${rotationMode}`);
     }
   }, [rotationMode]);
@@ -816,7 +813,7 @@ function App() {
     const hostname = window.location.hostname;
     const isDesktopApp = hostname === '' || hostname === 'wails.localhost' || window.location.protocol === 'wails:';
     if (isDesktopApp && layoutTheme) {
-      syncDisplayState(displayMode, activeText, linkedImage, rotationMode);
+      syncDisplayState(displayMode, activeText, linkedImage);
     }
   }, [layoutTheme]);
 
@@ -825,7 +822,7 @@ function App() {
     const hostname = window.location.hostname;
     const isDesktopApp = hostname === '' || hostname === 'wails.localhost' || window.location.protocol === 'wails:';
     if (isDesktopApp) {
-      syncDisplayState(displayMode, activeText, linkedImage, rotationMode);
+      syncDisplayState(displayMode, activeText, linkedImage);
     }
   }, [showBib]);
 
@@ -973,7 +970,7 @@ function App() {
           <thead>
             <tr style={{ backgroundColor: theme.headerBg, color: theme.headerText, fontWeight: 'bold', ...rowStyle }}>
               <th colSpan={headerColSpan} style={headerEventNameStyle}>{currentLifData.eventName}</th>
-              <th style={{ ...tableCellStyle, textAlign: 'right', paddingRight: '1ch' }}>{currentLifData.wind}</th>
+              <th style={{ ...tableCellStyle, textAlign: 'right', paddingRight: '1ch' }}>{currentLifData.wind || ''}</th>
             </tr>
           </thead>
           <tbody>
@@ -1102,7 +1099,7 @@ function App() {
             <thead>
               <tr style={{ backgroundColor: theme.headerBg, color: theme.headerText, fontWeight: 'bold', ...rowStyle }}>
                 <th colSpan={headerColSpan} style={headerEventNameStyle}>{currentLifData.eventName}</th>
-                <th style={{ ...tableCellStyle, textAlign: 'right', paddingRight: '1ch' }}>{currentLifData.wind}</th>
+                <th style={{ ...tableCellStyle, textAlign: 'right', paddingRight: '1ch' }}>{currentLifData.wind || ''}</th>
               </tr>
             </thead>
             <tbody>

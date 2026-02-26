@@ -12,7 +12,8 @@ function Results() {
   const [lifDataArray, setLifDataArray] = useState([]);
   const [layout, setLayout] = useState('2x2'); // Only "2x2" or "3x2" allowed
   const [displayMode, setDisplayMode] = useState('rotate'); // "rotate" or "latest"
-  const [rotateIndex, setRotateIndex] = useState(0);
+  const [rotateIndex, setRotateIndex] = useState(0); // Page rotation for multi-grid
+  const [competitorRotateIndex, setCompetitorRotateIndex] = useState(0); // Competitor rotation within panels
   const [textMultiplier, setTextMultiplier] = useState(60); // as a percentage
   const [error, setError] = useState('');
   const [selectedDir, setSelectedDir] = useState('');
@@ -37,9 +38,6 @@ function Results() {
   // Auto-hide control bar for web browsers
   const [showControls, setShowControls] = useState(true);
   const [hideTimeout, setHideTimeout] = useState(null);
-
-  // Separate rotation indices for multi-grid and full-screen modes
-  const [fullScreenRotateIndex, setFullScreenRotateIndex] = useState(0);
 
   // Ref to measure actual control panel height
   const controlPanelRef = useRef(null);
@@ -426,97 +424,64 @@ function Results() {
     return { col1, col2, col3, col4, col5, totalCh };
   };
 
-  // Compute displayed competitors for full screen mode with rotation
-  const displayedCompetitors = useMemo(() => {
-    if (!currentLIF || !currentLIF.competitors) {
-      return Array(8).fill({ place: "", id: "", firstName: "", lastName: "", affiliation: "", time: "" });
+  // Helper: apply rotation mode to a list of competitors, returns 8 rows
+  const applyRotation = (comps, index) => {
+    const emptyRow = { place: "", id: "", firstName: "", lastName: "", affiliation: "", time: "" };
+    if (!comps || comps.length === 0) {
+      return Array(8).fill(emptyRow);
     }
-
-    const comps = currentLIF.competitors;
-
     if (comps.length <= 8) {
-      // Return all with padding
       const result = comps.slice(0, 8);
-      while (result.length < 8) {
-        result.push({ place: "", id: "", firstName: "", lastName: "", affiliation: "", time: "" });
-      }
+      while (result.length < 8) result.push(emptyRow);
       return result;
     }
-
-    // Apply rotation mode from desktop
     if (rotationMode === 'scroll') {
-      // Top 3 locked, remaining 5 scroll
       const fixed = comps.slice(0, 3);
       const rotating = comps.slice(3);
       const windowSize = 5;
-      let rollingDisplayed = rotating.slice(fullScreenRotateIndex, fullScreenRotateIndex + windowSize);
-      if (rollingDisplayed.length < windowSize) {
-        const needed = windowSize - rollingDisplayed.length;
-        rollingDisplayed = rollingDisplayed.concat(rotating.slice(0, needed));
-      }
-      while (rollingDisplayed.length < windowSize) {
-        rollingDisplayed.push({ place: "", id: "", firstName: "", lastName: "", affiliation: "", time: "" });
-      }
-      return fixed.concat(rollingDisplayed);
+      const maxIdx = rotating.length - windowSize;
+      const idx = maxIdx > 0 ? index % (maxIdx + 1) : 0;
+      let rolling = rotating.slice(idx, idx + windowSize);
+      if (rolling.length < windowSize) rolling = rolling.concat(rotating.slice(0, windowSize - rolling.length));
+      return fixed.concat(rolling);
     } else if (rotationMode === 'page') {
-      // 8 per page
       const pageSize = 8;
-      const startIndex = fullScreenRotateIndex * pageSize;
-      const result = comps.slice(startIndex, startIndex + pageSize);
-      while (result.length < 8) {
-        result.push({ place: "", id: "", firstName: "", lastName: "", affiliation: "", time: "" });
-      }
+      const totalPages = Math.ceil(comps.length / pageSize);
+      const pageIdx = index % totalPages;
+      const result = comps.slice(pageIdx * pageSize, pageIdx * pageSize + pageSize);
+      while (result.length < 8) result.push(emptyRow);
       return result;
     } else if (rotationMode === 'scrollAll') {
-      // All 8 scroll
-      const windowSize = 8;
-      let result = comps.slice(fullScreenRotateIndex, fullScreenRotateIndex + windowSize);
-      if (result.length < windowSize) {
-        const needed = windowSize - result.length;
-        result = result.concat(comps.slice(0, needed));
-      }
-      while (result.length < 8) {
-        result.push({ place: "", id: "", firstName: "", lastName: "", affiliation: "", time: "" });
-      }
+      const maxIdx = comps.length - 1;
+      const idx = index % (maxIdx + 1);
+      let result = comps.slice(idx, idx + 8);
+      if (result.length < 8) result = result.concat(comps.slice(0, 8 - result.length));
       return result;
     }
-  }, [currentLIF, fullScreenRotateIndex, rotationMode]);
+    return comps.slice(0, 8);
+  };
+
+  // Compute displayed competitors for full screen mode with rotation
+  const displayedCompetitors = useMemo(() => {
+    const comps = (currentLIF && currentLIF.competitors) || [];
+    return applyRotation(comps, competitorRotateIndex);
+  }, [currentLIF, competitorRotateIndex, rotationMode]);
 
   // Track current event name to detect when event changes (not just data refresh)
   const currentEventName = currentLIF?.eventName || '';
 
-  // Reset rotation index when event changes or rotation mode changes
+  // Reset competitor rotation index when rotation mode changes
   useEffect(() => {
-    setFullScreenRotateIndex(0);
-  }, [currentEventName, rotationMode]);
+    setCompetitorRotateIndex(0);
+  }, [rotationMode]);
 
-  // Rotation effect for full screen mode
+  // Competitor rotation timer — increments every 5 seconds
   useEffect(() => {
-    if (viewMode === 'fullscreen' && currentLIF && currentLIF.competitors && currentLIF.competitors.length > 8) {
-      const totalCompetitors = currentLIF.competitors.length;
-      let maxIndex = 0;
-
-      if (rotationMode === 'scroll') {
-        const rotatingCount = totalCompetitors - 3;
-        const windowSize = 5;
-        maxIndex = rotatingCount - windowSize;
-      } else if (rotationMode === 'page') {
-        const totalPages = Math.ceil(totalCompetitors / 8);
-        maxIndex = totalPages - 1;
-      } else if (rotationMode === 'scrollAll') {
-        maxIndex = totalCompetitors - 1;
-      }
-
-      const intervalId = setInterval(() => {
-        setFullScreenRotateIndex(prevIndex => {
-          const nextIndex = prevIndex + 1;
-          return nextIndex > maxIndex ? 0 : nextIndex;
-        });
-      }, 5000);
-
-      return () => clearInterval(intervalId);
-    }
-  }, [viewMode, rotationMode]);
+    const intervalId = setInterval(() => {
+      setCompetitorRotateIndex(prev => prev + 1);
+    }, 5000);
+    return () => clearInterval(intervalId);
+  }, [rotationMode]);
 
   // Helper: get cell content and style for a column key
   const getCellContent = (comp, colKey, theme, cellStyle) => {
@@ -543,9 +508,7 @@ function Results() {
   const Panel = ({ data, panelFontSize, panelSize }) => {
     const theme = THEMES[layoutTheme] || THEMES.classic;
     const competitors = data.competitors || [];
-    const displayedCompetitors = competitors.length >= 8
-      ? competitors.slice(0, 8)
-      : [...competitors, ...Array(8 - competitors.length).fill({ place: "", id: "", firstName: "", lastName: "", affiliation: "", time: "" })];
+    const displayedCompetitors = applyRotation(competitors, competitorRotateIndex);
 
     // Apply shortenClub for width calculation
     const compsForWidth = displayedCompetitors.map(c => ({ ...c, affiliation: shortenClub(c.affiliation, customAcronyms) }));
@@ -599,7 +562,7 @@ function Results() {
           {data.eventName}
         </div>
         <div style={{ ...cellStyle, backgroundColor: theme.headerBg, color: theme.headerText, fontWeight: 'bold', justifyContent: 'flex-end' }}>
-          {data.wind}
+          {data.wind || ''}
         </div>
 
         {/* Competitor rows */}
@@ -724,7 +687,7 @@ function Results() {
           {currentLIF.eventName}
         </div>
         <div style={{ ...cellStyle, backgroundColor: theme.headerBg, color: theme.headerText, fontWeight: 'bold', justifyContent: 'flex-end' }}>
-          {currentLIF.wind}
+          {currentLIF.wind || ''}
         </div>
 
         {/* Competitor rows */}

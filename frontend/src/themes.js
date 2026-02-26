@@ -9,7 +9,7 @@ export const THEMES = {
     evenRowBg: '#191970',
     oddRowBg: '#4682B4',
     rowText: '#ffffff',
-    columns: ['place', 'bib', 'name', 'affiliation', 'time'],
+    columns: ['place', 'name', 'bib', 'affiliation', 'time'],
     columnStyles: {},
   },
   modernDark: {
@@ -2139,5 +2139,6 @@ export function shortenClub(affiliation, customAcronyms) {
       return acronym;
     }
   }
-  return trimmed;
+  // No match found — leave blank
+  return '';
 }
