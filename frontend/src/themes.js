@@ -2139,6 +2139,10 @@ export function shortenClub(affiliation, customAcronyms) {
       return acronym;
     }
   }
+
+  // No translation found — display short affiliations (5 chars or less) as-is
+  if (trimmed.length <= 5) return trimmed;
+
   // No match found — leave blank
   return '';
 }
