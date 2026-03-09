@@ -12,6 +12,8 @@ export function GetAllLIFData():Promise<Array<main.LifData>>;
 
 export function GetDisplayState():Promise<main.DisplayState>;
 
+export function GetInitialDir():Promise<string>;
+
 export function GetWebInterfaceInfo():Promise<string>;
 
 export function SaveGraphic(arg1:string,arg2:string):Promise<string>;

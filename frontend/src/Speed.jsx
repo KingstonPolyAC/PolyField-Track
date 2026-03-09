@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import polyfieldLogo from './polyfield-logo.png';
+import { useTranslation } from './i18n';
 
 const WORLD_RECORDS = {
   60:    { men: { time: 6.34,    athlete: 'Christian Coleman' },       women: { time: 6.92,    athlete: 'Irina Privalova' } },
@@ -78,7 +79,7 @@ const SegmentedControl = ({ options, selected, onChange }) => (
   </div>
 );
 
-function drawSpeedometer(canvas, athleteName, speedMs, unit, maxSpeed, wrMen, wrWomen) {
+function drawSpeedometer(canvas, athleteName, speedMs, unit, maxSpeed, wrMen, wrWomen, t) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
   const w = canvas.clientWidth;
@@ -227,7 +228,7 @@ function drawSpeedometer(canvas, athleteName, speedMs, unit, maxSpeed, wrMen, wr
     ctx.fillStyle = '#ffffff';
     ctx.font = `${fontSize}px sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('of WR', cx, y);
+    ctx.fillText(t ? t('speed.ofWR') : 'of WR', cx, y);
 
     const labelHalfWidth = ctx.measureText('of WR').width / 2;
 
@@ -249,6 +250,7 @@ function drawSpeedometer(canvas, athleteName, speedMs, unit, maxSpeed, wrMen, wr
 }
 
 function Speed() {
+  const { t, setLanguage } = useTranslation();
   const [lifDataArray, setLifDataArray] = useState([]);
   const [selectedRace, setSelectedRace] = useState('');
   const [unit, setUnit] = useState('mph');
@@ -268,8 +270,23 @@ function Speed() {
         console.error('Error fetching LIF data:', err);
       }
     }
+    // Fetch display state for language sync
+    async function fetchDisplayState() {
+      try {
+        const hostname = window.location.hostname;
+        const isDesktop = hostname === '' || hostname === 'wails.localhost' || window.location.protocol === 'wails:';
+        const baseUrl = isDesktop ? 'http://127.0.0.1:3000' : '';
+        const response = await fetch(`${baseUrl}/display-state`);
+        if (!response.ok) return;
+        const state = await response.json();
+        if (state.language) setLanguage(state.language);
+      } catch (err) {
+        // Silently fail
+      }
+    }
     fetchData();
-    const interval = setInterval(fetchData, 3000);
+    fetchDisplayState();
+    const interval = setInterval(() => { fetchData(); fetchDisplayState(); }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -316,10 +333,10 @@ function Speed() {
     raceData.athletes.forEach((a, i) => {
       const canvas = canvasRefs.current[i];
       if (canvas) {
-        drawSpeedometer(canvas, a.name, a.speedMs, unit, raceData.maxSpeed, raceData.wrMenMs, raceData.wrWomenMs);
+        drawSpeedometer(canvas, a.name, a.speedMs, unit, raceData.maxSpeed, raceData.wrMenMs, raceData.wrWomenMs, t);
       }
     });
-  }, [raceData, unit]);
+  }, [raceData, unit, t]);
 
   useEffect(() => {
     drawAll();
@@ -357,7 +374,7 @@ function Speed() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <img src={polyfieldLogo} alt="PolyField" style={{ height: 32 }} />
           <h1 style={{ margin: 0, fontSize: '1.2rem', color: '#ffffff', whiteSpace: 'nowrap' }}>
-            PolyField — Speed
+            {t('common.polyfieldSpeed')}
           </h1>
           <select
             value={selectedRace}
@@ -380,7 +397,7 @@ function Speed() {
               transition: 'border-color 0.2s',
             }}
           >
-            <option value="">Select a race...</option>
+            <option value="">{t('speed.selectRace')}</option>
             {lifDataArray.map((lif, i) => (
               <option key={i} value={lif.eventName}>{lif.eventName}</option>
             ))}
@@ -421,7 +438,7 @@ function Speed() {
         </div>
       ) : (
         <div style={{ textAlign: 'center', padding: 60, color: '#556677', fontSize: '1.1rem' }}>
-          {selectedRace ? 'No valid results for this race.' : 'Select a race to view speeds.'}
+          {selectedRace ? t('speed.noValidResults') : t('speed.selectRacePrompt')}
         </div>
       )}
 
@@ -440,15 +457,15 @@ function Speed() {
         }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ display: 'inline-block', width: 24, height: 3, background: '#4caf50', borderRadius: 2 }} />
-            Athlete Speed
+            {t('speed.athleteSpeed')}
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ display: 'inline-block', width: 24, height: 3, background: '#1565c0', borderRadius: 2 }} />
-            Men's WR — {wrInfo.men.athlete}
+            {t('speed.mensWR')} — {wrInfo.men.athlete}
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ display: 'inline-block', width: 24, height: 3, background: '#e91e63', borderRadius: 2 }} />
-            Women's WR — {wrInfo.women.athlete}
+            {t('speed.womensWR')} — {wrInfo.women.athlete}
           </span>
         </div>
       )}

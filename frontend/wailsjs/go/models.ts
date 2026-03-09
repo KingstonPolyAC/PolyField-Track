@@ -68,6 +68,7 @@ export namespace main {
 	    layoutTheme: string;
 	    currentLIF?: LifData;
 	    showBib: boolean;
+	    language: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new DisplayState(source);
@@ -82,6 +83,7 @@ export namespace main {
 	        this.layoutTheme = source["layoutTheme"];
 	        this.currentLIF = this.convertValues(source["currentLIF"], LifData);
 	        this.showBib = source["showBib"];
+	        this.language = source["language"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChooseDirectory, EnterFullScreen, ExitFullScreen, GetWebInterfaceInfo, SaveGraphic } from "../wailsjs/go/main/App";
+import { ChooseDirectory, EnterFullScreen, ExitFullScreen, GetWebInterfaceInfo, SaveGraphic, GetInitialDir } from "../wailsjs/go/main/App";
 import { THEMES, getColumnWidths, shortenClub } from './themes';
+import { useTranslation } from './i18n';
 import polyfieldLogo from './polyfield-logo.png';
 import SocialGraphic from './SocialGraphic';
 
@@ -102,6 +103,8 @@ function App() {
       ))}
     </div>
   );
+
+  const { t, language, setLanguage } = useTranslation();
 
   // === CORE STATE ===
   const [currentLifData, setCurrentLifData] = useState(null);
@@ -282,6 +285,7 @@ function App() {
         rotationMode: rotation !== null ? rotation : rotationModeRef.current,
         layoutTheme: layoutThemeRef.current,
         showBib: showBibRef.current,
+        language: language,
       };
       // Include current LIF if provided, or use current LIF data
       if (lifData !== null) {
@@ -643,9 +647,28 @@ function App() {
       } catch (error) {
         addDebugLog("Failed to enter fullscreen on startup");
       }
+      // Load saved directory from backend config
+      try {
+        const dir = await GetInitialDir();
+        if (dir) {
+          setSelectedDir(dir);
+          addDebugLog(`Restored directory: ${dir}`);
+        }
+      } catch (error) {
+        addDebugLog("Failed to load saved directory");
+      }
     };
     startup();
   }, []);
+
+  // Sync language changes to server
+  useEffect(() => {
+    const hostname = window.location.hostname;
+    const isDesktopApp = hostname === '' || hostname === 'wails.localhost' || window.location.protocol === 'wails:';
+    if (isDesktopApp) {
+      syncDisplayState(displayMode, activeText, linkedImage);
+    }
+  }, [language]);
 
   // Window resize effect
   useEffect(() => {
@@ -1029,7 +1052,7 @@ function App() {
       textAlign: 'center',
       padding: '10px'
     }}>
-      {!selectedDir ? "Link Your Results Directory To Start" : "Monitoring directory for new results"}
+      {!selectedDir ? t('app.linkDirToStart') : t('app.monitoringDir')}
     </div>
   );
 
@@ -1119,8 +1142,8 @@ function App() {
               })}
             </tbody>
           </table>
-          <div style={{ padding: '2px 4px', color: 'white', backgroundColor: 'black' }}>Press Esc to exit expanded table mode.</div>
-          <div style={{ padding: '2px 4px', color: 'white', backgroundColor: 'black' }}>Version 3.1.0 - Gordon Lester - support@polyfield.co.uk</div>
+          <div style={{ padding: '2px 4px', color: 'white', backgroundColor: 'black' }}>{t('common.escToExit')}</div>
+          <div style={{ padding: '2px 4px', color: 'white', backgroundColor: 'black' }}>{t('common.version')}</div>
         </div>
       );
     } else {
@@ -1136,7 +1159,7 @@ function App() {
           textAlign: 'center',
           padding: '10px'
         }}>
-          {!selectedDir ? "Link Your Results Directory To Start" : "Monitoring directory for new results"}
+          {!selectedDir ? t('app.linkDirToStart') : t('app.monitoringDir')}
         </div>
       );
     }
@@ -1174,7 +1197,7 @@ function App() {
           gap: '12px',
         }}>
           <img src={polyfieldLogo} alt="PF" style={{ height: '36px', width: '36px' }} />
-          <h4 style={{ margin: 0, flex: 1, fontWeight: 'bold', letterSpacing: '0.5px' }}>PolyField - Track</h4>
+          <h4 style={{ margin: 0, flex: 1, fontWeight: 'bold', letterSpacing: '0.5px' }}>{t('common.polyfield')}</h4>
           <button
             onClick={chooseDirectory}
             style={{
@@ -1189,7 +1212,7 @@ function App() {
               fontSize: '0.9rem',
             }}
           >
-            {selectedDir ? 'Change Folder' : 'Select Results Folder'}
+            {selectedDir ? t('app.changeFolder') : t('app.selectResultsFolder')}
           </button>
         </div>
 
@@ -1220,15 +1243,15 @@ function App() {
 
           {/* 1. Text & Screensaver - grouped, most frequently used */}
           <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #1a3050' }}>
-            <h6 style={{ color: '#ffffff', marginBottom: '8px', fontSize: '0.95rem' }}>Display Text &amp; Screensaver</h6>
+            <h6 style={{ color: '#ffffff', marginBottom: '8px', fontSize: '0.95rem' }}>{t('app.displayTextScreensaver')}</h6>
             <p style={{ color: '#a0b4c8', fontSize: '0.8rem', marginBottom: '8px' }}>
-              Show a message or screensaver on all connected screens. Cleared automatically when a new race finishes.
+              {t('app.displayTextDesc')}
             </p>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
               <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Enter text to display on all screens..."
+                placeholder={t('app.enterTextPlaceholder')}
                 rows={4}
                 style={{
                   flex: 1,
@@ -1246,11 +1269,11 @@ function App() {
                 <button onClick={showTextDisplay} style={{
                   backgroundColor: '#1565c0', color: '#ffffff', border: 'none', borderRadius: '6px',
                   padding: '10px 16px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem',
-                }}>Display</button>
+                }}>{t('app.display')}</button>
                 <button onClick={clearTextDisplay} style={{
                   backgroundColor: 'transparent', color: '#a0b4c8', border: '1px solid #2a4a6b', borderRadius: '6px',
                   padding: '6px 16px', cursor: 'pointer', fontSize: '0.85rem',
-                }}>Clear</button>
+                }}>{t('app.clear')}</button>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -1258,13 +1281,13 @@ function App() {
                 backgroundColor: 'transparent', color: '#e0e0e0', border: '1px solid #2a4a6b', borderRadius: '6px',
                 padding: '6px 14px', cursor: 'pointer', fontSize: '0.85rem',
               }}>
-                {linkedImage ? 'Change Image' : 'Link Image'}
+                {linkedImage ? t('app.changeImage') : t('app.linkImage')}
               </button>
               <button onClick={showScreensaver} disabled={!linkedImage} style={{
                 backgroundColor: linkedImage ? '#1565c0' : '#1a3050', color: linkedImage ? '#ffffff' : '#5a7a9a',
                 border: 'none', borderRadius: '6px', padding: '6px 14px', cursor: linkedImage ? 'pointer' : 'default',
                 fontSize: '0.85rem',
-              }}>Screensaver</button>
+              }}>{t('app.screensaver')}</button>
               <div style={{ flex: 1 }} />
               <button onClick={restoreLastLIF} disabled={lifDataHistory.length === 0} style={{
                 backgroundColor: 'transparent',
@@ -1272,34 +1295,34 @@ function App() {
                 border: `1px solid ${lifDataHistory.length > 0 ? '#2a4a6b' : '#1a3050'}`,
                 borderRadius: '6px', padding: '6px 14px', cursor: lifDataHistory.length > 0 ? 'pointer' : 'default',
                 fontSize: '0.85rem',
-              }}>Restore Last Result ({lifDataHistory.length})</button>
+              }}>{t('app.restoreLastResult')} ({lifDataHistory.length})</button>
             </div>
           </div>
 
           {/* 2. Full Screen Controls */}
           <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #1a3050' }}>
-            <h6 style={{ color: '#ffffff', marginBottom: '8px', fontSize: '0.95rem' }}>Full Screen</h6>
+            <h6 style={{ color: '#ffffff', marginBottom: '8px', fontSize: '0.95rem' }}>{t('app.fullScreen')}</h6>
             <div style={{ display: 'flex', gap: '10px' }}>
               <div style={{ flex: 1 }}>
                 <button onClick={() => setExpandedTable(!expandedTable)} style={{
                   width: '100%', backgroundColor: expandedTable ? '#2e7d32' : '#1565c0', color: '#ffffff',
                   border: 'none', borderRadius: '6px', padding: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem',
                 }}>
-                  {expandedTable ? 'Exit Table View' : 'Full Screen Table'}
+                  {expandedTable ? t('app.exitTableView') : t('app.fullScreenTable')}
                 </button>
-                <p style={{ color: '#a0b4c8', fontSize: '0.78rem', marginTop: '4px', marginBottom: 0 }}>Maximise results on this display</p>
+                <p style={{ color: '#a0b4c8', fontSize: '0.78rem', marginTop: '4px', marginBottom: 0 }}>{t('app.maximiseResults')}</p>
               </div>
               <div style={{ flex: 1 }}>
                 <button onClick={toggleAppFullScreen} style={{
                   width: '100%', backgroundColor: appFullScreen ? '#2e7d32' : '#1565c0', color: '#ffffff',
                   border: 'none', borderRadius: '6px', padding: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem',
                 }}>
-                  {appFullScreen ? 'Exit Full Screen' : 'Full Screen App'}
+                  {appFullScreen ? t('app.exitFullScreen') : t('app.fullScreenApp')}
                 </button>
-                <p style={{ color: '#a0b4c8', fontSize: '0.78rem', marginTop: '4px', marginBottom: 0 }}>Maximise the entire window</p>
+                <p style={{ color: '#a0b4c8', fontSize: '0.78rem', marginTop: '4px', marginBottom: 0 }}>{t('app.maximiseWindow')}</p>
               </div>
             </div>
-            <p style={{ color: '#7a9ab8', fontSize: '0.78rem', marginTop: '8px', marginBottom: 0 }}>Press Esc to exit either mode.</p>
+            <p style={{ color: '#7a9ab8', fontSize: '0.78rem', marginTop: '8px', marginBottom: 0 }}>{t('app.escToExitEither')}</p>
           </div>
 
           {/* 3. Text Size - collapsible */}
@@ -1308,12 +1331,12 @@ function App() {
               onClick={() => setShowTextSize(!showTextSize)}
               style={{ color: '#ffffff', marginBottom: showTextSize ? '8px' : 0, fontSize: '0.95rem', cursor: 'pointer', userSelect: 'none' }}
             >
-              {showTextSize ? '▾' : '▸'} Text Size ({textMultiplier}%)
+              {showTextSize ? '▾' : '▸'} {t('app.textSize')} ({textMultiplier}%)
             </h6>
             {showTextSize && (
               <>
                 <p style={{ color: '#a0b4c8', fontSize: '0.8rem', marginBottom: '8px' }}>
-                  Alter the default text size for displays
+                  {t('app.textSizeDesc')}
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #2a4a6b', borderRadius: 6, overflow: 'hidden' }}>
                   <div
@@ -1346,26 +1369,26 @@ function App() {
               onClick={() => setShowRotation(!showRotation)}
               style={{ color: '#ffffff', marginBottom: showRotation ? '8px' : 0, fontSize: '0.95rem', cursor: 'pointer', userSelect: 'none' }}
             >
-              {showRotation ? '▾' : '▸'} Rotation Mode
+              {showRotation ? '▾' : '▸'} {t('app.rotationMode')}
             </h6>
             {showRotation && (
               <>
                 <p style={{ color: '#a0b4c8', fontSize: '0.8rem', marginBottom: '8px' }}>
-                  Select how results with more than 8 athletes display
+                  {t('app.rotationModeDesc')}
                 </p>
                 <SegmentedControl
                   options={[
-                    { value: 'scroll', label: 'Scroll' },
-                    { value: 'page', label: 'Page' },
-                    { value: 'scrollAll', label: 'Scroll All' },
+                    { value: 'scroll', label: t('app.scroll') },
+                    { value: 'page', label: t('app.page') },
+                    { value: 'scrollAll', label: t('app.scrollAll') },
                   ]}
                   selected={rotationMode}
                   onChange={setRotationMode}
                 />
                 <p style={{ color: '#7a9ab8', fontSize: '0.78rem', marginTop: '6px', marginBottom: 0 }}>
-                  {rotationMode === 'scroll' && 'Top 3 locked, positions 4+ scroll'}
-                  {rotationMode === 'page' && 'Pages of 8: 1-8, 9-16, etc.'}
-                  {rotationMode === 'scrollAll' && 'All 8 positions scroll through'}
+                  {rotationMode === 'scroll' && t('app.scrollDesc')}
+                  {rotationMode === 'page' && t('app.pageDesc')}
+                  {rotationMode === 'scrollAll' && t('app.scrollAllDesc')}
                 </p>
               </>
             )}
@@ -1377,12 +1400,12 @@ function App() {
               onClick={() => setShowTheme(!showTheme)}
               style={{ color: '#ffffff', marginBottom: showTheme ? '8px' : 0, fontSize: '0.95rem', cursor: 'pointer', userSelect: 'none' }}
             >
-              {showTheme ? '▾' : '▸'} Display Theme
+              {showTheme ? '▾' : '▸'} {t('app.displayTheme')}
             </h6>
             {showTheme && (
               <>
                 <p style={{ color: '#a0b4c8', fontSize: '0.8rem', marginBottom: '8px' }}>
-                  Set the default layout and colour scheme for all displays
+                  {t('app.displayThemeDesc')}
                 </p>
                 <SegmentedControl
                   options={Object.entries(THEMES).map(([key, theme]) => ({ value: key, label: theme.name }))}
@@ -1399,17 +1422,17 @@ function App() {
               onClick={() => setShowBibs(!showBibs)}
               style={{ color: '#ffffff', marginBottom: showBibs ? '8px' : 0, fontSize: '0.95rem', cursor: 'pointer', userSelect: 'none' }}
             >
-              {showBibs ? '▾' : '▸'} Bib Settings
+              {showBibs ? '▾' : '▸'} {t('app.bibSettings')}
             </h6>
             {showBibs && (
               <>
                 <p style={{ color: '#a0b4c8', fontSize: '0.8rem', marginBottom: '8px' }}>
-                  Show or hide bibs from the displays
+                  {t('app.bibSettingsDesc')}
                 </p>
                 <SegmentedControl
                   options={[
-                    { value: true, label: 'Show Bibs' },
-                    { value: false, label: 'Hide Bibs' },
+                    { value: true, label: t('app.showBibs') },
+                    { value: false, label: t('app.hideBibs') },
                   ]}
                   selected={showBib}
                   onChange={setShowBib}
@@ -1424,19 +1447,19 @@ function App() {
               onClick={() => setShowWebViews(!showWebViews)}
               style={{ color: '#ffffff', marginBottom: showWebViews ? '8px' : 0, fontSize: '0.95rem', cursor: 'pointer', userSelect: 'none' }}
             >
-              {showWebViews ? '▾' : '▸'} Web Views
+              {showWebViews ? '▾' : '▸'} {t('app.webViews')}
             </h6>
             {showWebViews && (
               <>
                 <p style={{ color: '#a0b4c8', fontSize: '0.8rem', marginBottom: '8px' }}>
-                  Open display pages accessible to anyone on the local network.
+                  {t('app.webViewsDesc')}
                 </p>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <Link to="/results" style={{ flex: 1, textDecoration: 'none' }}>
                     <button style={{
                       width: '100%', backgroundColor: '#1565c0', color: '#ffffff', border: 'none',
                       borderRadius: '6px', padding: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem',
-                    }}>Multi Result Mode</button>
+                    }}>{t('app.multiResultMode')}</button>
                   </Link>
                   <button onClick={() => {
                     const hn = window.location.hostname;
@@ -1446,32 +1469,45 @@ function App() {
                     flex: 1, backgroundColor: '#1565c0', color: '#ffffff', border: 'none',
                     borderRadius: '6px', padding: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem',
                   }}>
-                    <span style={{ marginRight: '6px' }}>&#128269;</span>Athlete Search
+                    <span style={{ marginRight: '6px' }}>&#128269;</span>{t('app.athleteSearch')}
                   </button>
                   <button onClick={() => setShowSocialGraphic(true)} style={{
                     flex: 1, backgroundColor: '#e65100', color: '#ffffff', border: 'none',
                     borderRadius: '6px', padding: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '0.9rem',
-                  }}>Social Graphic</button>
+                  }}>{t('app.socialGraphic')}</button>
                 </div>
               </>
             )}
           </div>
 
-          {/* 7. Competition Stats - collapsible */}
+          {/* 7. Language Toggle */}
+          <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #1a3050' }}>
+            <h6 style={{ color: '#ffffff', marginBottom: '8px', fontSize: '0.95rem' }}>{t('app.language')}</h6>
+            <SegmentedControl
+              options={[
+                { value: 'en', label: 'EN' },
+                { value: 'fr', label: 'FR' },
+              ]}
+              selected={language}
+              onChange={setLanguage}
+            />
+          </div>
+
+          {/* 8. Competition Stats - collapsible */}
           <div style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #1a3050' }}>
             <h6
               onClick={() => setShowStats(!showStats)}
               style={{ color: '#ffffff', marginBottom: showStats ? '8px' : 0, fontSize: '0.95rem', cursor: 'pointer', userSelect: 'none' }}
             >
-              {showStats ? '▾' : '▸'} Competition Stats
+              {showStats ? '▾' : '▸'} {t('app.competitionStats')}
             </h6>
             {showStats && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 {[
-                  { value: competitionStats.totalDistance, label: 'Total Distance' },
-                  { value: competitionStats.totalAthletes, label: 'Race Entries' },
-                  { value: competitionStats.totalTime, label: 'Total Race Time' },
-                  { value: competitionStats.avgWind, label: 'Average Wind' },
+                  { value: competitionStats.totalDistance, label: t('app.totalDistance') },
+                  { value: competitionStats.totalAthletes, label: t('app.raceEntries') },
+                  { value: competitionStats.totalTime, label: t('app.totalRaceTime') },
+                  { value: competitionStats.avgWind, label: t('app.averageWind') },
                 ].map((stat, i) => (
                   <div key={i} style={{
                     backgroundColor: '#0a1628',
@@ -1500,7 +1536,7 @@ function App() {
           borderTop: '1px solid #1a3050',
           backgroundColor: '#0a1628',
         }}>
-          Version 3.1.0 - Gordon Lester - support@polyfield.co.uk
+          {t('common.version')}
         </div>
       </div>
 
@@ -1522,7 +1558,7 @@ function App() {
           border: '1px solid #333'
         }}>
           <div style={{ fontWeight: 'bold', marginBottom: '3px' }}>
-            Debug Log: (Mode: {displayMode}, History: {lifDataHistory.length}, ModTime: {lastModifiedTimeRef.current})
+            {t('app.debugLog')}: (Mode: {displayMode}, History: {lifDataHistory.length}, ModTime: {lastModifiedTimeRef.current})
           </div>
           {debugLog.map((log, index) => (
             <div key={index} style={{ marginBottom: '1px' }}>{log}</div>
@@ -1535,6 +1571,7 @@ function App() {
         isOpen={showSocialGraphic}
         onClose={() => setShowSocialGraphic(false)}
         stats={competitionStats}
+        t={t}
         onSave={async (dataUrl, units) => {
           const path = await SaveGraphic(dataUrl, units);
           addDebugLog(`Graphic saved: ${path}`);

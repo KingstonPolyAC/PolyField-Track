@@ -22,6 +22,10 @@ export function GetDisplayState() {
   return window['go']['main']['App']['GetDisplayState']();
 }
 
+export function GetInitialDir() {
+  return window['go']['main']['App']['GetInitialDir']();
+}
+
 export function GetWebInterfaceInfo() {
   return window['go']['main']['App']['GetWebInterfaceInfo']();
 }

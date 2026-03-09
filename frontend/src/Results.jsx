@@ -2,9 +2,11 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GetAllLIFData, ChooseDirectory, EnterFullScreen, ExitFullScreen, GetWebInterfaceInfo } from '../wailsjs/go/main/App';
 import { THEMES, getColumnWidths, shortenClub } from './themes';
+import { useTranslation } from './i18n';
 
 function Results() {
   const navigate = useNavigate();
+  const { t, setLanguage } = useTranslation();
   const hostname = window.location.hostname;
   const isDesktopApp = hostname === '' || hostname === 'wails.localhost' || window.location.protocol === 'wails:';
 
@@ -119,6 +121,11 @@ function Results() {
         // Update show bib setting
         if (state.showBib !== undefined) {
           setShowBib(state.showBib);
+        }
+
+        // Sync language from server
+        if (state.language) {
+          setLanguage(state.language);
         }
 
         // Update display mode and overlays (text/screensaver)
@@ -635,7 +642,7 @@ function Results() {
     if (!currentLIF || !currentLIF.competitors || currentLIF.competitors.length === 0) {
       return (
         <div style={{ ...containerStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white' }}>
-          <h2>No event data available</h2>
+          <h2>{t('results.noEventData')}</h2>
         </div>
       );
     }
@@ -721,12 +728,12 @@ function Results() {
   const totalPages = lifDataArray.length > gridCount ? Math.ceil(lifDataArray.length / gridCount) : 1;
   const currentPage = lifDataArray.length > gridCount ? (rotateIndex % totalPages) + 1 : 1;
   const pageInfo = displayMode === 'rotate' && lifDataArray.length > gridCount
-    ? ` - Page ${currentPage} of ${totalPages}`
+    ? ` - ${t('results.pageOf', { current: currentPage, total: totalPages })}`
     : '';
 
   return (
     <div style={{ padding: viewMode === 'fullscreen' ? '0' : '20px', backgroundColor: '#222', minHeight: '100vh', color: 'white', position: 'relative', overflow: 'hidden' }}>
-      {viewMode === 'multi' && <h2 style={{ textAlign: 'center' }}>Results{pageInfo}</h2>}
+      {viewMode === 'multi' && <h2 style={{ textAlign: 'center' }}>{t('results.title')}{pageInfo}</h2>}
 
       {/* Multi-grid view */}
       {viewMode === 'multi' && (
@@ -749,7 +756,7 @@ function Results() {
 
               {/* Back Button (always visible) */}
               <div>
-                <button className="btn btn-primary mx-1" onClick={() => navigate("/")}>Back</button>
+                <button className="btn btn-primary mx-1" onClick={() => navigate("/")}>{t('common.back')}</button>
                 <button className="btn btn-primary mx-1" onClick={() => navigate("/athlete")} title="Athlete Search">&#128269;</button>
                 <button className="btn btn-primary mx-1" onClick={() => navigate("/speed")} title="Speed Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style={{verticalAlign:'middle'}}><path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Z"/><path d="M8 4a.5.5 0 0 1 .5.5v3.793l2.354 2.353a.5.5 0 0 1-.708.708L7.854 9.061A.5.5 0 0 1 7.5 8.5v-4A.5.5 0 0 1 8 4Z" transform="rotate(-45 8 8)"/></svg></button>
               </div>
@@ -759,13 +766,13 @@ function Results() {
                 <>
                   {/* Directory Selection */}
                   <div>
-                    <button className="btn btn-primary mx-1" onClick={chooseDirectory}>Select Results Directory</button>
+                    <button className="btn btn-primary mx-1" onClick={chooseDirectory}>{t('results.selectResultsDir')}</button>
                     {error && <span className="text-danger ml-2">{error}</span>}
                     {selectedDir && <span className="text-muted ml-2">{selectedDir}</span>}
                   </div>
                   {/* Full Screen Button */}
                   <div>
-                    <button className="btn btn-primary mx-1" onClick={toggleFullScreen}>Full Screen</button>
+                    <button className="btn btn-primary mx-1" onClick={toggleFullScreen}>{t('results.fullScreen')}</button>
                   </div>
                 </>
               )}
@@ -773,47 +780,47 @@ function Results() {
               {/* View Mode Toggle (web only) */}
               {!isDesktopApp && (
                 <div className="d-flex align-items-center">
-                  <span className="mr-1">View:</span>
+                  <span className="mr-1">{t('results.view')}:</span>
                   <button
                     className={`btn mx-1 ${viewMode === 'multi' ? 'btn-success' : 'btn-secondary'}`}
                     onClick={() => setViewMode('multi')}
                   >
-                    Multi Grid
+                    {t('results.multiGrid')}
                   </button>
                   <button
                     className={`btn mx-1 ${viewMode === 'fullscreen' ? 'btn-success' : 'btn-secondary'}`}
                     onClick={() => setViewMode('fullscreen')}
                   >
-                    Full Screen Table
+                    {t('results.fullScreenTable')}
                   </button>
                 </div>
               )}
 
               {/* Layout Controls (both desktop and web) */}
               <div className="d-flex align-items-center">
-                <span className="mr-1">Layout:</span>
+                <span className="mr-1">{t('results.layout')}:</span>
                 <button className="btn btn-primary mx-1" onClick={() => setLayout('2x2')}>2x2</button>
                 <button className="btn btn-primary mx-1" onClick={() => setLayout('3x2')}>3x2</button>
               </div>
 
               {/* Mode Controls (both desktop and web) */}
               <div className="d-flex align-items-center">
-                <span className="mr-1">Mode:</span>
-                <button className="btn btn-primary mx-1" onClick={() => setDisplayMode('rotate')}>Rotate</button>
-                <button className="btn btn-primary mx-1" onClick={() => setDisplayMode('latest')}>Latest</button>
+                <span className="mr-1">{t('results.mode')}:</span>
+                <button className="btn btn-primary mx-1" onClick={() => setDisplayMode('rotate')}>{t('results.rotate')}</button>
+                <button className="btn btn-primary mx-1" onClick={() => setDisplayMode('latest')}>{t('results.latest')}</button>
               </div>
 
               {/* Text Size Controls (both desktop and web) */}
               <div className="d-flex align-items-center">
-                <span className="mr-1">Text:</span>
-                <button className="btn btn-primary mx-1" onClick={decrementTextMultiplier}>Smaller</button>
-                <button className="btn btn-primary mx-1" onClick={incrementTextMultiplier}>Larger</button>
+                <span className="mr-1">{t('results.text')}:</span>
+                <button className="btn btn-primary mx-1" onClick={decrementTextMultiplier}>{t('results.smaller')}</button>
+                <button className="btn btn-primary mx-1" onClick={incrementTextMultiplier}>{t('results.larger')}</button>
                 <span className="ml-2">{textMultiplier}%</span>
               </div>
 
               {/* Version Info */}
               <div>
-                <small className="text-muted">Version 3.1.0 - Gordon Lester - support@polyfield.co.uk</small>
+                <small className="text-muted">{t('common.version')}</small>
               </div>
             </div>
           </div>

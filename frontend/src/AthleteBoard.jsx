@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from './i18n';
 
 function AthleteBoard() {
+  const { t, setLanguage } = useTranslation();
   const [lifDataArray, setLifDataArray] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBib, setSelectedBib] = useState(null);
@@ -24,8 +26,23 @@ function AthleteBoard() {
         console.error('Error fetching LIF data:', err);
       }
     }
+    // Fetch display state for language sync
+    async function fetchDisplayState() {
+      try {
+        const hostname = window.location.hostname;
+        const isDesktop = hostname === '' || hostname === 'wails.localhost' || window.location.protocol === 'wails:';
+        const baseUrl = isDesktop ? 'http://127.0.0.1:3000' : '';
+        const response = await fetch(`${baseUrl}/display-state`);
+        if (!response.ok) return;
+        const state = await response.json();
+        if (state.language) setLanguage(state.language);
+      } catch (err) {
+        // Silently fail
+      }
+    }
     fetchData();
-    const interval = setInterval(fetchData, 3000);
+    fetchDisplayState();
+    const interval = setInterval(() => { fetchData(); fetchDisplayState(); }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -196,7 +213,7 @@ function AthleteBoard() {
           onMouseEnter={(e) => e.currentTarget.style.background = colors.backBtnHover}
           onMouseLeave={(e) => e.currentTarget.style.background = colors.backBtnBg}
         >
-          &#8592; Back
+          &#8592; {t('common.back')}
         </button>
 
         {/* Athlete name */}
@@ -214,7 +231,7 @@ function AthleteBoard() {
           color: colors.textSecondary,
           marginBottom: 'clamp(24px, 5vh, 60px)',
         }}>
-          Bib #{selectedAthlete.bib}
+          {t('athlete.bib')} #{selectedAthlete.bib}
           {selectedAthlete.affiliation ? ` — ${selectedAthlete.affiliation}` : ''}
         </div>
 
@@ -271,7 +288,7 @@ function AthleteBoard() {
         textAlign: 'center',
         letterSpacing: '1px',
       }}>
-        PolyField Analytics &nbsp;|&nbsp; www.polyfield.co.uk
+        {t('common.polyfieldAnalytics')} &nbsp;|&nbsp; {t('common.website')}
       </div>
 
       {/* Search bar with dropdown */}
@@ -297,7 +314,7 @@ function AthleteBoard() {
               width: '100%',
               boxSizing: 'border-box',
             }}
-            placeholder="Search by athlete name or bib number..."
+            placeholder={t('athlete.searchPlaceholder')}
             value={searchTerm}
             onChange={handleSearchChange}
             onFocus={() => setDropdownOpen(true)}
@@ -367,7 +384,7 @@ function AthleteBoard() {
             onMouseEnter={(e) => e.currentTarget.style.background = colors.resetHover}
             onMouseLeave={(e) => e.currentTarget.style.background = colors.resetBg}
           >
-            Reset
+            {t('common.reset')}
           </button>
         )}
       </div>
@@ -381,7 +398,7 @@ function AthleteBoard() {
           marginTop: '80px',
           padding: '0 20px',
         }}>
-          Enter an athlete name or bib number to view their results
+          {t('athlete.enterPrompt')}
         </div>
       )}
 
@@ -394,7 +411,7 @@ function AthleteBoard() {
           marginTop: '80px',
           padding: '0 20px',
         }}>
-          No athletes found for &ldquo;{searchTerm.trim()}&rdquo;
+          {t('athlete.noAthletesFound')} &ldquo;{searchTerm.trim()}&rdquo;
         </div>
       )}
 
@@ -422,7 +439,7 @@ function AthleteBoard() {
               color: colors.textSecondary,
               marginTop: '8px',
             }}>
-              Bib #{selectedAthlete.bib}
+              {t('athlete.bib')} #{selectedAthlete.bib}
               {selectedAthlete.affiliation ? ` — ${selectedAthlete.affiliation}` : ''}
             </div>
           </div>
@@ -503,7 +520,7 @@ function AthleteBoard() {
                       color: colors.wind,
                       marginTop: 'clamp(4px, 0.5vh, 8px)',
                     }}>
-                      Wind: {evt.wind}
+                      {t('athlete.wind')}: {evt.wind}
                     </div>
                   )}
                   {isClickable && (
@@ -512,7 +529,7 @@ function AthleteBoard() {
                       color: colors.textMuted,
                       marginTop: 'clamp(8px, 1vh, 16px)',
                     }}>
-                      Tap to enlarge
+                      {t('athlete.tapToEnlarge')}
                     </div>
                   )}
                 </div>
@@ -532,7 +549,7 @@ function AthleteBoard() {
                 }}
                 onClick={handleBackToResults}
               >
-                &#8592; Back to results
+                &#8592; {t('athlete.backToResults')}
               </span>
             </div>
           )}

@@ -5,6 +5,7 @@ import Results from './Results';
 import AthleteBoard from './AthleteBoard';
 import Speed from './Speed';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { I18nProvider } from './i18n';
 import './style.css';
 
 // Desktop app shows the control dashboard; web browsers redirect to /results
@@ -22,13 +23,15 @@ function HomeRoute() {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomeRoute />} />
-        <Route path="/results" element={<Results />} />
-        <Route path="/athlete" element={<AthleteBoard />} />
-        <Route path="/speed" element={<Speed />} />
-      </Routes>
-    </BrowserRouter>
+    <I18nProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomeRoute />} />
+          <Route path="/results" element={<Results />} />
+          <Route path="/athlete" element={<AthleteBoard />} />
+          <Route path="/speed" element={<Speed />} />
+        </Routes>
+      </BrowserRouter>
+    </I18nProvider>
   </React.StrictMode>
 );

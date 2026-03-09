@@ -11,7 +11,7 @@ const BODY_START_Y = 210;
 const FOOTER_TOP = 980;
 const MAX_PER_PAGE = Math.floor((FOOTER_TOP - BODY_START_Y - 10) / MIN_ROW_HEIGHT);
 
-function SocialGraphic({ isOpen, onClose, stats, onSave }) {
+function SocialGraphic({ isOpen, onClose, stats, onSave, t }) {
   const canvasRef = useRef(null);
   const [logoImg, setLogoImg] = useState(null);
   const [useMiles, setUseMiles] = useState(false);
@@ -56,7 +56,7 @@ function SocialGraphic({ isOpen, onClose, stats, onSave }) {
       ctx.font = 'bold 52px Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('COMPETITION STATS', SIZE / 2, 120);
+      ctx.fillText(t ? t('social.competitionStats') : 'COMPETITION STATS', SIZE / 2, 120);
 
       ctx.strokeStyle = '#FFD700';
       ctx.lineWidth = 2;
@@ -85,10 +85,10 @@ function SocialGraphic({ isOpen, onClose, stats, onSave }) {
       }
 
       const cards = [
-        { value: distanceDisplay, label: 'TOTAL DISTANCE' },
-        { value: stats.totalAthletes, label: 'RACE ENTRIES' },
-        { value: stats.totalTime, label: 'TOTAL RACE TIME' },
-        { value: stats.avgWind, label: 'AVERAGE WIND' },
+        { value: distanceDisplay, label: t ? t('social.totalDistance') : 'TOTAL DISTANCE' },
+        { value: stats.totalAthletes, label: t ? t('social.raceEntries') : 'RACE ENTRIES' },
+        { value: stats.totalTime, label: t ? t('social.totalRaceTime') : 'TOTAL RACE TIME' },
+        { value: stats.avgWind, label: t ? t('social.averageWind') : 'AVERAGE WIND' },
       ];
 
       cards.forEach((card, i) => {
@@ -134,9 +134,10 @@ function SocialGraphic({ isOpen, onClose, stats, onSave }) {
       });
     } else {
       // ── SPEEDS VIEW ──
+      const eventSpeedsLabel = t ? t('social.eventSpeeds') : 'EVENT SPEEDS';
       const titleText = totalPages > 1
-        ? `EVENT SPEEDS (${speedPage + 1}/${totalPages})`
-        : 'EVENT SPEEDS';
+        ? `${eventSpeedsLabel} (${speedPage + 1}/${totalPages})`
+        : eventSpeedsLabel;
 
       ctx.fillStyle = '#FFD700';
       ctx.font = 'bold 52px Arial, sans-serif';
@@ -155,7 +156,7 @@ function SocialGraphic({ isOpen, onClose, stats, onSave }) {
         ctx.fillStyle = '#c0c0c0';
         ctx.font = '32px Arial, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('No track events found', SIZE / 2, SIZE / 2);
+        ctx.fillText(t ? t('social.noTrackEvents') : 'No track events found', SIZE / 2, SIZE / 2);
       } else {
         // Slice events for current page
         const pageStart = speedPage * MAX_PER_PAGE;
@@ -176,7 +177,7 @@ function SocialGraphic({ isOpen, onClose, stats, onSave }) {
         ctx.font = 'bold 26px Arial, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText('EVENT', tableLeft + 10, headerY);
+        ctx.fillText(t ? t('social.event') : 'EVENT', tableLeft + 10, headerY);
         ctx.textAlign = 'center';
         ctx.fillText('m/s', col2Center, headerY);
         ctx.fillText('mph', col3Center, headerY);
@@ -237,7 +238,7 @@ function SocialGraphic({ isOpen, onClose, stats, onSave }) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('www.polyfield.co.uk', SIZE / 2, 1030);
-  }, [isOpen, stats, logoImg, useMiles, view, speedPage, events.length, totalPages]);
+  }, [isOpen, stats, logoImg, useMiles, view, speedPage, events.length, totalPages, t]);
 
   if (!isOpen) return null;
 
@@ -255,10 +256,10 @@ function SocialGraphic({ isOpen, onClose, stats, onSave }) {
       try {
         const path = await onSave(dataUrl, units);
         const filename = path ? path.split('/').pop().split('\\').pop() : 'file';
-        setSaveMessage(`PNG saved in results directory: ${filename}`);
+        setSaveMessage(t ? t('social.pngSaved', { filename }) : `PNG saved in results directory: ${filename}`);
         setTimeout(() => setSaveMessage(''), 5000);
       } catch {
-        setSaveMessage('Failed to save PNG');
+        setSaveMessage(t ? t('social.saveFailed') : 'Failed to save PNG');
         setTimeout(() => setSaveMessage(''), 5000);
       }
     }
@@ -320,8 +321,8 @@ function SocialGraphic({ isOpen, onClose, stats, onSave }) {
           }}
         />
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <button onClick={() => setView('stats')} style={toggleBtnStyle(view === 'stats')}>Stats</button>
-          <button onClick={() => setView('speeds')} style={toggleBtnStyle(view === 'speeds')}>Speeds</button>
+          <button onClick={() => setView('stats')} style={toggleBtnStyle(view === 'stats')}>{t ? t('social.stats') : 'Stats'}</button>
+          <button onClick={() => setView('speeds')} style={toggleBtnStyle(view === 'speeds')}>{t ? t('social.speeds') : 'Speeds'}</button>
           {view === 'stats' && (
             <button onClick={() => setUseMiles(prev => !prev)} style={{
               backgroundColor: 'transparent',
@@ -360,7 +361,7 @@ function SocialGraphic({ isOpen, onClose, stats, onSave }) {
             fontWeight: 'bold',
             fontSize: '1rem',
             cursor: 'pointer',
-          }}>Save PNG</button>
+          }}>{t ? t('social.savePng') : 'Save PNG'}</button>
           <button onClick={onClose} style={{
             backgroundColor: 'transparent',
             color: '#e0e0e0',
@@ -369,7 +370,7 @@ function SocialGraphic({ isOpen, onClose, stats, onSave }) {
             padding: '12px 32px',
             fontSize: '1rem',
             cursor: 'pointer',
-          }}>Close</button>
+          }}>{t ? t('common.close') : 'Close'}</button>
         </div>
         {saveMessage && (
           <div style={{

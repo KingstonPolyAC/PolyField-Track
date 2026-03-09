@@ -5,6 +5,7 @@ import (
 	"embed"
 	"encoding/base64"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
@@ -67,6 +68,65 @@ type DisplayState struct {
 	LayoutTheme  string   `json:"layoutTheme"`  // 'classic', 'modernDark', 'light', or 'highContrast'
 	CurrentLIF   *LifData `json:"currentLIF"`   // Current single event LIF for full screen mode
 	ShowBib      bool     `json:"showBib"`      // Whether to show bib column in tables
+	Language     string   `json:"language"`      // 'en' or 'fr', default 'en'
+}
+
+// AppConfig holds persistent settings saved to disk
+type AppConfig struct {
+	Language     string `json:"language"`
+	MonitoredDir string `json:"monitoredDir"`
+}
+
+// configPath returns the path to the config file
+func configPath() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		log.Printf("Error getting home dir: %v", err)
+		return ""
+	}
+	return filepath.Join(home, ".polyfield-track", "config.json")
+}
+
+// loadConfig reads the config file, returning defaults if missing
+func loadConfig() AppConfig {
+	cfg := AppConfig{Language: "en"}
+	path := configPath()
+	if path == "" {
+		return cfg
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return cfg
+	}
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		log.Printf("Error parsing config: %v", err)
+		return AppConfig{Language: "en"}
+	}
+	if cfg.Language == "" {
+		cfg.Language = "en"
+	}
+	return cfg
+}
+
+// saveConfig writes the current config to disk
+func saveConfig(cfg AppConfig) {
+	path := configPath()
+	if path == "" {
+		return
+	}
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		log.Printf("Error creating config dir: %v", err)
+		return
+	}
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		log.Printf("Error marshalling config: %v", err)
+		return
+	}
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		log.Printf("Error writing config: %v", err)
+	}
 }
 
 // App holds the application state.
@@ -82,6 +142,7 @@ type App struct {
 
 // NewApp creates a new App instance.
 func NewApp() *App {
+	cfg := loadConfig()
 	return &App{
 		displayState: &DisplayState{
 			Mode:         "lif",
@@ -90,7 +151,9 @@ func NewApp() *App {
 			RotationMode: "scroll",
 			LayoutTheme:  "classic",
 			ShowBib:      true,
+			Language:     cfg.Language,
 		},
+		monitoredDir:       cfg.MonitoredDir,
 		customClubAcronyms: make(map[string]string),
 	}
 }
@@ -182,7 +245,7 @@ func (a *App) GetDisplayState() *DisplayState {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.displayState == nil {
-		return &DisplayState{Mode: "lif", ActiveText: "", ImageBase64: "", RotationMode: "scroll", LayoutTheme: "classic", ShowBib: true}
+		return &DisplayState{Mode: "lif", ActiveText: "", ImageBase64: "", RotationMode: "scroll", LayoutTheme: "classic", ShowBib: true, Language: "en"}
 	}
 	return a.displayState
 }
@@ -192,6 +255,23 @@ func (a *App) startup(ctx context.Context) {
 	log.Println("Wails app startup complete. Context set.")
 	// Maximize window on startup.
 	runtime.WindowMaximise(a.ctx)
+
+	// Auto-restore monitored directory from config
+	if a.monitoredDir != "" {
+		if info, err := os.Stat(a.monitoredDir); err == nil && info.IsDir() {
+			log.Printf("Auto-restoring monitored directory: %s", a.monitoredDir)
+			a.initClubList()
+			go a.watchDirectory()
+		} else {
+			log.Printf("Saved directory no longer exists: %s", a.monitoredDir)
+			a.monitoredDir = ""
+		}
+	}
+}
+
+// GetInitialDir returns the saved monitored directory so the frontend can show it on load
+func (a *App) GetInitialDir() string {
+	return a.monitoredDir
 }
 
 func (a *App) ChooseDirectory() (string, error) {
@@ -210,6 +290,12 @@ func (a *App) ChooseDirectory() (string, error) {
 	a.monitoredDir = dir
 	a.initClubList()
 	go a.watchDirectory()
+
+	// Save directory to config
+	cfg := loadConfig()
+	cfg.MonitoredDir = dir
+	saveConfig(cfg)
+
 	return dir, nil
 }
 
@@ -1086,6 +1172,18 @@ func StartFiberServer(app *App) {
 		}
 		app.SetShowBib(state.ShowBib)
 		app.SetCurrentLIF(state.CurrentLIF)
+
+		// Save language to config if provided
+		if state.Language != "" {
+			app.mu.Lock()
+			app.displayState.Language = state.Language
+			app.mu.Unlock()
+			cfg := loadConfig()
+			cfg.Language = state.Language
+			saveConfig(cfg)
+			log.Printf("Language updated: %s", state.Language)
+		}
+
 		return c.JSON(map[string]interface{}{"success": true})
 	})
 	// API endpoint to get custom club acronyms.
