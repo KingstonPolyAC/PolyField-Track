@@ -1487,6 +1487,7 @@ function App() {
               options={[
                 { value: 'en', label: 'EN' },
                 { value: 'fr', label: 'FR' },
+                { value: 'es', label: 'ES' },
               ]}
               selected={language}
               onChange={setLanguage}

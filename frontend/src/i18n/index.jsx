@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import en from './locales/en.json';
 import fr from './locales/fr.json';
+import es from './locales/es.json';
 
-const translations = { en, fr };
+const translations = { en, fr, es };
 
 const I18nContext = createContext();
 
