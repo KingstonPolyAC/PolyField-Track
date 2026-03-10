@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChooseDirectory, EnterFullScreen, ExitFullScreen, GetWebInterfaceInfo, SaveGraphic, GetInitialDir } from "../wailsjs/go/main/App";
+import { ChooseDirectory, EnterFullScreen, ExitFullScreen, GetWebInterfaceInfo, SaveGraphic, GetInitialDir, OpenClubList } from "../wailsjs/go/main/App";
 import { THEMES, getColumnWidths, shortenClub } from './themes';
 import { useTranslation } from './i18n';
 import polyfieldLogo from './polyfield-logo.png';
@@ -1437,6 +1437,27 @@ function App() {
                   selected={showBib}
                   onChange={setShowBib}
                 />
+                <p style={{ color: '#a0b4c8', fontSize: '0.8rem', marginTop: '12px', marginBottom: '8px' }}>
+                  {t('app.editClubListDesc')}
+                </p>
+                <button
+                  onClick={() => {
+                    OpenClubList()
+                      .then(() => console.log('Club list opened'))
+                      .catch(err => console.error('Club list error:', err));
+                  }}
+                  style={{
+                    background: '#1a3050',
+                    color: '#ffffff',
+                    border: '1px solid #2a4060',
+                    borderRadius: '6px',
+                    padding: '6px 16px',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                  }}
+                >
+                  {t('app.editClubList')}
+                </button>
               </>
             )}
           </div>

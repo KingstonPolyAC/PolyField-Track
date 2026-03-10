@@ -14,7 +14,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	sysRuntime "runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -248,6 +250,31 @@ func (a *App) GetDisplayState() *DisplayState {
 		return &DisplayState{Mode: "lif", ActiveText: "", ImageBase64: "", RotationMode: "scroll", LayoutTheme: "classic", ShowBib: true, Language: "en"}
 	}
 	return a.displayState
+}
+
+// OpenClubList opens the club-list.csv file in the user's default editor
+func (a *App) OpenClubList() (string, error) {
+	if a.monitoredDir == "" {
+		return "", fmt.Errorf("no directory selected")
+	}
+	csvPath := filepath.Join(a.monitoredDir, "club-list.csv")
+	if _, err := os.Stat(csvPath); os.IsNotExist(err) {
+		return "", fmt.Errorf("club-list.csv not found")
+	}
+	// Use macOS 'open' or Windows 'start' to open in default app
+	var cmd *exec.Cmd
+	switch sysRuntime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", csvPath)
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "start", "", csvPath)
+	default:
+		cmd = exec.Command("xdg-open", csvPath)
+	}
+	if err := cmd.Start(); err != nil {
+		return "", fmt.Errorf("failed to open club-list.csv: %v", err)
+	}
+	return csvPath, nil
 }
 
 func (a *App) startup(ctx context.Context) {

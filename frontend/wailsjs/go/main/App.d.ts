@@ -16,6 +16,8 @@ export function GetInitialDir():Promise<string>;
 
 export function GetWebInterfaceInfo():Promise<string>;
 
+export function OpenClubList():Promise<string>;
+
 export function SaveGraphic(arg1:string,arg2:string):Promise<string>;
 
 export function SetCurrentLIF(arg1:main.LifData):Promise<void>;

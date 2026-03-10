@@ -30,6 +30,10 @@ export function GetWebInterfaceInfo() {
   return window['go']['main']['App']['GetWebInterfaceInfo']();
 }
 
+export function OpenClubList() {
+  return window['go']['main']['App']['OpenClubList']();
+}
+
 export function SaveGraphic(arg1, arg2) {
   return window['go']['main']['App']['SaveGraphic'](arg1, arg2);
 }
