@@ -115,10 +115,13 @@ function App() {
   const [webInterfaceInfo, setWebInterfaceInfo] = useState("");
   
   // === DISPLAY STATE ===
-  const [displayMode, setDisplayMode] = useState('lif'); // 'lif', 'text', 'screensaver'
+  const [displayMode, setDisplayMode] = useState('lif'); // 'lif', 'text', 'screensaver', 'lineview'
   const [activeText, setActiveText] = useState('');
   const [inputText, setInputText] = useState('');
   const [linkedImage, setLinkedImage] = useState(null);
+  const [lineViewJpgs, setLineViewJpgs] = useState([]);
+  const [lineViewShowingJpg, setLineViewShowingJpg] = useState(true); // true = showing JPG, false = showing LIF
+  const [lineViewSeconds, setLineViewSeconds] = useState(3);
   
   // === UI STATE ===
   const [textMultiplier, setTextMultiplier] = useState(60);
@@ -749,11 +752,39 @@ function App() {
     }
   };
 
+  // Fetch JPG files available in the monitored directory (for Line View)
+  const fetchLineViewJpgs = async () => {
+    try {
+      const hostname = window.location.hostname;
+      const isDesktop = hostname === '' || hostname === 'wails.localhost' || window.location.protocol === 'wails:';
+      const baseUrl = isDesktop ? 'http://127.0.0.1:3000' : '';
+      const response = await fetch(`${baseUrl}/latest-jpg`);
+      if (!response.ok) return;
+      const data = await response.json();
+      setLineViewJpgs(data.jpgs || []);
+    } catch (err) {
+      // silently fail
+    }
+  };
+
+  // Toggle Line View on/off
+  const toggleLineView = () => {
+    if (displayMode === 'lineview') {
+      setDisplayMode('lif');
+      syncDisplayState('lif', '', '');
+    } else {
+      setLineViewShowingJpg(true); // always start on JPG
+      setDisplayMode('lineview');
+      syncDisplayState('lineview', '', '');
+    }
+  };
+
   // Data fetching effect - simple polling every 3 seconds
   useEffect(() => {
     fetchLatestData(); // Initial fetch
     fetchAllLifData(); // Initial fetch for stats
     fetchCustomAcronyms(); // Initial fetch for custom acronyms
+    fetchLineViewJpgs(); // Initial fetch for Line View JPGs
 
     // Only fetch display state if we're NOT in the Wails desktop app
     // Desktop app is the source of truth and only posts display state
@@ -763,6 +794,7 @@ function App() {
     const interval = setInterval(() => {
       fetchLatestData();
       fetchAllLifData();
+      fetchLineViewJpgs();
       if (!isDesktopApp) {
         fetchDisplayState(); // LAN viewers fetch display state from server
       }
@@ -848,6 +880,16 @@ function App() {
       syncDisplayState(displayMode, activeText, linkedImage);
     }
   }, [showBib]);
+
+  // Line View alternation effect: toggle between JPG and LIF every X seconds
+  useEffect(() => {
+    if (displayMode !== 'lineview') return;
+    const ms = Math.max(1, lineViewSeconds) * 1000;
+    const interval = setInterval(() => {
+      setLineViewShowingJpg(prev => !prev);
+    }, ms);
+    return () => clearInterval(interval);
+  }, [displayMode, lineViewSeconds]);
 
   // Competitor rotation effect
   useEffect(() => {
@@ -1040,6 +1082,17 @@ function App() {
     </div>
   );
 
+  // Always use the latest (first) JPG
+  const lineViewSrc = lineViewJpgs.length > 0
+    ? `http://127.0.0.1:3000/jpg-file?name=${encodeURIComponent(lineViewJpgs[0])}`
+    : null;
+
+  const renderLineView = () => (
+    <div style={{ ...defaultTableContainerStyle, backgroundColor: '#000' }}>
+      {lineViewSrc && <img src={lineViewSrc} alt="Line View" style={screensaverImageStyle} />}
+    </div>
+  );
+
   const renderFallback = () => (
     <div style={{
       ...defaultTableContainerStyle,
@@ -1064,10 +1117,17 @@ function App() {
         return activeText ? renderTextDisplay() : renderFallback();
       case 'screensaver':
         return linkedImage ? renderScreensaver() : renderFallback();
+      case 'lineview':
+        if (!lineViewShowingJpg) {
+          return (currentLifData && currentLifData.competitors && currentLifData.competitors.length > 0)
+            ? renderLIFTable()
+            : renderFallback();
+        }
+        return lineViewSrc ? renderLineView() : renderFallback();
       case 'lif':
       default:
-        return (currentLifData && currentLifData.competitors && currentLifData.competitors.length > 0) 
-          ? renderLIFTable() 
+        return (currentLifData && currentLifData.competitors && currentLifData.competitors.length > 0)
+          ? renderLIFTable()
           : renderFallback();
     }
   };
@@ -1100,6 +1160,15 @@ function App() {
       return (
         <div style={{ ...expandedTableContainerStyle, backgroundColor: '#000' }}>
           <img src={linkedImage} alt="Screensaver" style={screensaverImageStyle} />
+        </div>
+      );
+    }
+
+    // Show Line View in expanded mode if active and on JPG phase
+    if (displayMode === 'lineview' && lineViewShowingJpg && lineViewSrc) {
+      return (
+        <div style={{ ...expandedTableContainerStyle, backgroundColor: '#000' }}>
+          <img src={lineViewSrc} alt="Line View" style={screensaverImageStyle} />
         </div>
       );
     }
@@ -1288,6 +1357,27 @@ function App() {
                 border: 'none', borderRadius: '6px', padding: '6px 14px', cursor: linkedImage ? 'pointer' : 'default',
                 fontSize: '0.85rem',
               }}>{t('app.screensaver')}</button>
+              <button onClick={toggleLineView} disabled={lineViewJpgs.length === 0} style={{
+                backgroundColor: displayMode === 'lineview' ? '#2e7d32' : (lineViewJpgs.length > 0 ? '#1565c0' : '#1a3050'),
+                color: lineViewJpgs.length > 0 ? '#ffffff' : '#5a7a9a',
+                border: 'none', borderRadius: '6px', padding: '6px 14px',
+                cursor: lineViewJpgs.length > 0 ? 'pointer' : 'default', fontSize: '0.85rem',
+              }}>{displayMode === 'lineview' ? 'Line View Hide' : 'Line View Show'}</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <label style={{ fontSize: '0.75rem', color: '#a0b4c8', whiteSpace: 'nowrap' }}>Rotation (s)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="60"
+                  value={lineViewSeconds}
+                  onChange={(e) => setLineViewSeconds(Math.max(1, parseInt(e.target.value) || 3))}
+                  style={{
+                    width: '48px', backgroundColor: '#0a1628', color: '#e0e0e0',
+                    border: '1px solid #2a4a6b', borderRadius: '4px', padding: '4px 6px',
+                    fontSize: '0.85rem', textAlign: 'center',
+                  }}
+                />
+              </div>
               <div style={{ flex: 1 }} />
               <button onClick={restoreLastLIF} disabled={lifDataHistory.length === 0} style={{
                 backgroundColor: 'transparent',

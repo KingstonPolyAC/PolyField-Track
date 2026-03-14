@@ -1223,6 +1223,60 @@ func StartFiberServer(app *App) {
 		}
 		return c.JSON(acronyms)
 	})
+	// API endpoint to list JPG files in the monitored directory.
+	fiberApp.Get("/latest-jpg", func(c *fiber.Ctx) error {
+		app.mu.Lock()
+		dir := app.monitoredDir
+		app.mu.Unlock()
+		if dir == "" {
+			return c.JSON(map[string]interface{}{"jpgs": []string{}, "count": 0})
+		}
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			return c.JSON(map[string]interface{}{"jpgs": []string{}, "count": 0})
+		}
+		type jpgEntry struct {
+			name    string
+			modTime time.Time
+		}
+		var found []jpgEntry
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				lower := strings.ToLower(entry.Name())
+				if strings.HasSuffix(lower, ".jpg") || strings.HasSuffix(lower, ".jpeg") {
+					info, err := entry.Info()
+					if err == nil {
+						found = append(found, jpgEntry{name: entry.Name(), modTime: info.ModTime()})
+					}
+				}
+			}
+		}
+		sort.Slice(found, func(i, j int) bool {
+			return found[i].modTime.After(found[j].modTime)
+		})
+		names := make([]string, len(found))
+		for i, f := range found {
+			names[i] = f.name
+		}
+		return c.JSON(map[string]interface{}{"jpgs": names, "count": len(names)})
+	})
+	// API endpoint to serve a specific JPG file from the monitored directory.
+	fiberApp.Get("/jpg-file", func(c *fiber.Ctx) error {
+		app.mu.Lock()
+		dir := app.monitoredDir
+		app.mu.Unlock()
+		name := c.Query("name")
+		if name == "" || dir == "" {
+			return c.Status(400).SendString("missing name or directory")
+		}
+		cleanName := filepath.Base(name)
+		data, err := os.ReadFile(filepath.Join(dir, cleanName))
+		if err != nil {
+			return c.Status(404).SendString("file not found")
+		}
+		c.Set("Content-Type", "image/jpeg")
+		return c.Send(data)
+	})
 	// Serve static files from embedded assets using the filesystem middleware.
 	dist, err := fs.Sub(assets, "frontend/dist")
 	if err != nil {

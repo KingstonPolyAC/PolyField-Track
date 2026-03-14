@@ -29,9 +29,13 @@ function Results() {
   const [layoutTheme, setLayoutTheme] = useState('classic'); // Synced from desktop
 
   // Display mode synced from desktop (for text/screensaver overlays)
-  const [syncedDisplayMode, setSyncedDisplayMode] = useState('lif'); // 'lif', 'text', or 'screensaver'
+  const [syncedDisplayMode, setSyncedDisplayMode] = useState('lif'); // 'lif', 'text', 'screensaver', or 'lineview'
   const [syncedActiveText, setSyncedActiveText] = useState('');
   const [syncedImageBase64, setSyncedImageBase64] = useState('');
+
+  // Line View state (for LAN viewers alternating between JPG and LIF)
+  const [lineViewJpgs, setLineViewJpgs] = useState([]);
+  const [lineViewShowingJpg, setLineViewShowingJpg] = useState(true);
 
   // Custom club acronyms and bib toggle
   const [customAcronyms, setCustomAcronyms] = useState(null);
@@ -128,7 +132,7 @@ function Results() {
           setLanguage(state.language);
         }
 
-        // Update display mode and overlays (text/screensaver)
+        // Update display mode and overlays (text/screensaver/lineview)
         if (state.mode) {
           setSyncedDisplayMode(state.mode);
         }
@@ -141,11 +145,32 @@ function Results() {
       } catch (err) {
         console.error('Error fetching display state:', err);
       }
+
+      // Also fetch Line View JPGs
+      try {
+        const response2 = await fetch(`${baseUrl}/latest-jpg`);
+        if (response2.ok) {
+          const jpgData = await response2.json();
+          setLineViewJpgs(jpgData.jpgs || []);
+        }
+      } catch (err) {
+        // silently fail
+      }
     }
     fetchDisplayState();
     const interval = setInterval(fetchDisplayState, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Line View alternation: toggle between JPG and LIF every 3 seconds
+  useEffect(() => {
+    if (syncedDisplayMode !== 'lineview') return;
+    setLineViewShowingJpg(true); // reset to JPG when mode activates
+    const interval = setInterval(() => {
+      setLineViewShowingJpg(prev => !prev);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [syncedDisplayMode]);
 
   // Text size adjustment functions
   const incrementTextMultiplier = () => setTextMultiplier(prev => Math.min(prev + 5, 200));
@@ -633,6 +658,21 @@ function Results() {
               height: '100%',
               objectFit: 'contain'
             }}
+          />
+        </div>
+      );
+    }
+
+    // Show Line View if active (JPG phase only; LIF phase falls through to table below)
+    if (syncedDisplayMode === 'lineview' && lineViewShowingJpg && lineViewJpgs.length > 0) {
+      const lvBaseUrl = isDesktopApp ? 'http://127.0.0.1:3000' : '';
+      const lineViewSrc = `${lvBaseUrl}/jpg-file?name=${encodeURIComponent(lineViewJpgs[0])}`;
+      return (
+        <div style={containerStyle}>
+          <img
+            src={lineViewSrc}
+            alt="Line View"
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
         </div>
       );
