@@ -663,14 +663,12 @@ function Results() {
       );
     }
 
-    // Show Line View if active (JPG phase only; LIF phase falls through to table below)
-    if (syncedDisplayMode === 'lineview' && lineViewShowingJpg && lineViewJpgs.length > 0) {
-      const lvBaseUrl = isDesktopApp ? 'http://127.0.0.1:3000' : '';
-      const lineViewSrc = `${lvBaseUrl}/jpg-file?name=${encodeURIComponent(lineViewJpgs[0])}`;
+    // Show Line View JPG phase — uses base64 synced from desktop via display-state
+    if (syncedDisplayMode === 'lineview' && lineViewShowingJpg && syncedImageBase64) {
       return (
         <div style={containerStyle}>
           <img
-            src={lineViewSrc}
+            src={syncedImageBase64}
             alt="Line View"
             style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />

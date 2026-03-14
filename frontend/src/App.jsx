@@ -767,15 +767,34 @@ function App() {
     }
   };
 
+  // Fetch the latest JPG as base64 and sync to LAN viewers via display-state
+  const syncLineViewImage = async (jpgs) => {
+    const list = jpgs || lineViewJpgs;
+    if (list.length === 0) return '';
+    try {
+      const response = await fetch(`http://127.0.0.1:3000/jpg-file?name=${encodeURIComponent(list[0])}`);
+      const blob = await response.blob();
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    } catch (err) {
+      return '';
+    }
+  };
+
   // Toggle Line View on/off
-  const toggleLineView = () => {
+  const toggleLineView = async () => {
     if (displayMode === 'lineview') {
       setDisplayMode('lif');
       syncDisplayState('lif', '', '');
     } else {
       setLineViewShowingJpg(true); // always start on JPG
       setDisplayMode('lineview');
-      syncDisplayState('lineview', '', '');
+      // Convert JPG to base64 so LAN viewers receive it via display-state (same as screensaver)
+      const base64 = await syncLineViewImage();
+      syncDisplayState('lineview', '', base64);
     }
   };
 
@@ -984,7 +1003,7 @@ function App() {
   const handleLinkImage = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/png';
+    input.accept = 'image/*';
     input.onchange = (e) => {
       const file = e.target.files[0];
       if (file) {
