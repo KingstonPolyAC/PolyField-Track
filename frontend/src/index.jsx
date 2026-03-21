@@ -4,6 +4,7 @@ import AppWrapper from './AppWrapper';
 import Results from './Results';
 import AthleteBoard from './AthleteBoard';
 import Speed from './Speed';
+import Clock from './Clock';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { I18nProvider } from './i18n';
 import './style.css';
@@ -30,6 +31,7 @@ root.render(
           <Route path="/results" element={<Results />} />
           <Route path="/athlete" element={<AthleteBoard />} />
           <Route path="/speed" element={<Speed />} />
+          <Route path="/clock" element={<Clock />} />
         </Routes>
       </BrowserRouter>
     </I18nProvider>

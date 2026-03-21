@@ -3,7 +3,7 @@
     "back": "Retour",
     "close": "Fermer",
     "reset": "Réinitialiser",
-    "version": "Version 3.3.0 - Gordon Lester - support@polyfield.co.uk",
+    "version": "Version 3.5.0 - Gordon Lester - support@polyfield.co.uk",
     "escToExit": "Appuyez sur Échap pour quitter",
     "polyfield": "PolyField - Track",
     "polyfieldAnalytics": "PolyField Analytique",
@@ -100,6 +100,13 @@
     "wind": "Vent",
     "tapToEnlarge": "Appuyer pour agrandir",
     "backToResults": "Retour aux résultats"
+  },
+  "clock": {
+    "unofficialTime": "TEMPS NON OFFICIEL",
+    "clockShow": "Afficher horloge",
+    "clockHide": "Masquer horloge",
+    "runningClock": "Horloge en cours",
+    "ready": "PRÊT"
   },
   "social": {
     "competitionStats": "STATISTIQUES DE LA COMPÉTITION",

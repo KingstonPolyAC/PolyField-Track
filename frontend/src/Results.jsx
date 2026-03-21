@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GetAllLIFData, ChooseDirectory, EnterFullScreen, ExitFullScreen, GetWebInterfaceInfo } from '../wailsjs/go/main/App';
 import { THEMES, getColumnWidths, shortenClub } from './themes';
 import { useTranslation } from './i18n';
+import { useRunningClock } from './clockUtils';
 
 function Results() {
   const navigate = useNavigate();
@@ -40,6 +41,11 @@ function Results() {
   // Custom club acronyms and bib toggle
   const [customAcronyms, setCustomAcronyms] = useState(null);
   const [showBib, setShowBib] = useState(true);
+
+  // FinishLynx running clock — interpolated at rAF speed, corrected every 200ms
+  const clockBaseUrl = (hostname === '' || hostname === 'wails.localhost' || window.location.protocol === 'wails:')
+    ? 'http://127.0.0.1:3000' : '';
+  const runningClock = useRunningClock(clockBaseUrl);
 
   // Auto-hide control bar for web browsers
   const [showControls, setShowControls] = useState(true);
@@ -676,6 +682,37 @@ function Results() {
       );
     }
 
+    // Show running clock full-screen (Option B — Clock mode)
+    if (syncedDisplayMode === 'clock') {
+      const isRunning = runningClock.state === 'running';
+      const isStopped = runningClock.state === 'stopped';
+      const isArmed = runningClock.state === 'armed';
+      const timeDisplay = runningClock.time || (isArmed ? t('clock.ready') : '—');
+      const timeColor = isRunning ? '#1e88e5' : isStopped ? '#e0e0e0' : '#607d8b';
+      return (
+        <div style={{
+          ...containerStyle,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#000',
+        }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '2vh' }}>
+            <div style={{ fontSize: '4vw', color: '#a0b4c8', letterSpacing: '0.08em', textAlign: 'center', padding: '0 4vw' }}>
+              {runningClock.eventName || '—'}
+            </div>
+            <div style={{ fontSize: `${Math.min(22, Math.floor(130 / (timeDisplay.length || 4)))}vw`, fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '0.03em', color: timeColor, lineHeight: 1 }}>
+              {timeDisplay}
+            </div>
+          </div>
+          <div style={{ paddingBottom: '3vh', fontSize: '2.2vw', color: '#f59e0b', letterSpacing: '0.15em' }}>
+            {t('clock.unofficialTime')}
+          </div>
+        </div>
+      );
+    }
+
     // Default: show LIF table (matches App.jsx)
     if (!currentLIF || !currentLIF.competitors || currentLIF.competitors.length === 0) {
       return (
@@ -782,8 +819,8 @@ function Results() {
         </div>
       )}
 
-      {/* Full screen table view */}
-      {viewMode === 'fullscreen' && <FullScreenTable />}
+      {/* Full screen table view — also force-shown when clock mode is active */}
+      {(viewMode === 'fullscreen' || syncedDisplayMode === 'clock') && <FullScreenTable />}
 
       {/* Fixed control panel positioned just above the bottom */}
       {/* Desktop: always show if not full screen. Web: show only if showControls is true */}
@@ -797,6 +834,7 @@ function Results() {
                 <button className="btn btn-primary mx-1" onClick={() => navigate("/")}>{t('common.back')}</button>
                 <button className="btn btn-primary mx-1" onClick={() => navigate("/athlete")} title="Athlete Search">&#128269;</button>
                 <button className="btn btn-primary mx-1" onClick={() => navigate("/speed")} title="Speed Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style={{verticalAlign:'middle'}}><path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Z"/><path d="M8 4a.5.5 0 0 1 .5.5v3.793l2.354 2.353a.5.5 0 0 1-.708.708L7.854 9.061A.5.5 0 0 1 7.5 8.5v-4A.5.5 0 0 1 8 4Z" transform="rotate(-45 8 8)"/></svg></button>
+                <button className="btn btn-primary mx-1" onClick={() => navigate("/clock")} title={t('clock.runningClock')}>&#128336;</button>
               </div>
 
               {/* Desktop-only controls */}

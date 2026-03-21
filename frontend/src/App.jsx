@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ChooseDirectory, EnterFullScreen, ExitFullScreen, GetWebInterfaceInfo, SaveGraphic, GetInitialDir, OpenClubList } from "../wailsjs/go/main/App";
 import { THEMES, getColumnWidths, shortenClub } from './themes';
 import { useTranslation } from './i18n';
+import { useRunningClock } from './clockUtils';
 import polyfieldLogo from './polyfield-logo.png';
 import SocialGraphic from './SocialGraphic';
 
@@ -138,6 +139,9 @@ function App() {
   // === CUSTOM CLUB ACRONYMS & BIB TOGGLE ===
   const [customAcronyms, setCustomAcronyms] = useState(null);
   const [showBib, setShowBib] = useState(true);
+
+  // === FINISHLYNX RUNNING CLOCK — interpolated at rAF speed, corrected every 200ms ===
+  const runningClock = useRunningClock('http://127.0.0.1:3000');
 
   // === UI COLLAPSE STATE ===
   const [showWebViews, setShowWebViews] = useState(false);
@@ -784,6 +788,13 @@ function App() {
     }
   };
 
+  // Toggle Clock display mode on/off (Option B — full-screen running clock on LAN views)
+  const toggleClockMode = () => {
+    const newMode = displayMode === 'clock' ? 'lif' : 'clock';
+    setDisplayMode(newMode);
+    syncDisplayState(newMode, activeText, linkedImage);
+  };
+
   // Toggle Line View on/off
   const toggleLineView = async () => {
     if (displayMode === 'lineview') {
@@ -1143,6 +1154,27 @@ function App() {
             : renderFallback();
         }
         return lineViewSrc ? renderLineView() : renderFallback();
+      case 'clock': {
+        const clkRunning = runningClock.state === 'running';
+        const clkArmed = runningClock.state === 'armed';
+        const clkTimeColor = clkRunning ? '#1e88e5' : '#e0e0e0';
+        const clkTimeDisplay = runningClock.time || (clkArmed ? t('clock.ready') : '—');
+        return (
+          <div style={{ ...defaultTableContainerStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: '#000' }}>
+            <div style={{ padding: '6px 8px 0', fontSize: '13px', color: '#a0b4c8', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
+              {runningClock.eventName || '—'}
+            </div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ fontSize: `${Math.min(90, Math.floor(520 / (clkTimeDisplay.length || 4)))}px`, fontWeight: 'bold', fontFamily: 'monospace', color: clkTimeColor, lineHeight: 1 }}>
+                {clkTimeDisplay}
+              </div>
+            </div>
+            <div style={{ padding: '0 0 6px', fontSize: '11px', color: '#f59e0b', letterSpacing: '0.15em' }}>
+              {t('clock.unofficialTime')}
+            </div>
+          </div>
+        );
+      }
       case 'lif':
       default:
         return (currentLifData && currentLifData.competitors && currentLifData.competitors.length > 0)
@@ -1188,6 +1220,30 @@ function App() {
       return (
         <div style={{ ...expandedTableContainerStyle, backgroundColor: '#000' }}>
           <img src={lineViewSrc} alt="Line View" style={screensaverImageStyle} />
+        </div>
+      );
+    }
+
+    // Show running clock full-screen (Option B — Clock mode)
+    if (displayMode === 'clock') {
+      const isRunning = runningClock.state === 'running';
+      const isStopped = runningClock.state === 'stopped';
+      const isArmed = runningClock.state === 'armed';
+      const timeDisplay = runningClock.time || (isArmed ? t('clock.ready') : '—');
+      const timeColor = isRunning ? '#1e88e5' : isStopped ? '#e0e0e0' : '#607d8b';
+      return (
+        <div style={{ ...expandedTableContainerStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '2vh' }}>
+            <div style={{ fontSize: '4vw', color: '#a0b4c8', letterSpacing: '0.08em', textAlign: 'center', padding: '0 4vw' }}>
+              {runningClock.eventName || '—'}
+            </div>
+            <div style={{ fontSize: `${Math.min(22, Math.floor(130 / (timeDisplay.length || 4)))}vw`, fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '0.03em', color: timeColor, lineHeight: 1 }}>
+              {timeDisplay}
+            </div>
+          </div>
+          <div style={{ paddingBottom: '3vh', fontSize: '2.2vw', color: '#f59e0b', letterSpacing: '0.15em' }}>
+            {t('clock.unofficialTime')}
+          </div>
         </div>
       );
     }
@@ -1382,6 +1438,11 @@ function App() {
                 border: 'none', borderRadius: '6px', padding: '6px 14px',
                 cursor: lineViewJpgs.length > 0 ? 'pointer' : 'default', fontSize: '0.85rem',
               }}>{displayMode === 'lineview' ? 'Line View Hide' : 'Line View Show'}</button>
+              <button onClick={toggleClockMode} style={{
+                backgroundColor: displayMode === 'clock' ? '#2e7d32' : '#1565c0',
+                color: '#ffffff', border: 'none', borderRadius: '6px', padding: '6px 14px',
+                cursor: 'pointer', fontSize: '0.85rem',
+              }}>{displayMode === 'clock' ? t('clock.clockHide') : t('clock.clockShow')}</button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <label style={{ fontSize: '0.75rem', color: '#a0b4c8', whiteSpace: 'nowrap' }}>Rotation (s)</label>
                 <input

@@ -61,9 +61,17 @@ type LifData struct {
 	ModifiedTime int64        `json:"modifiedTime"`
 }
 
+// RunningClock holds the live timing data received from FinishLynx via UDP.
+type RunningClock struct {
+	State      string `json:"state"`      // "armed", "running", "stopped", "idle"
+	Time       string `json:"time"`       // formatted time e.g. "0:12.34"
+	EventName  string `json:"eventName"`  // e.g. "100m Men Final"
+	ReceivedAt int64  `json:"receivedAt"` // Unix ms when UDP packet was received
+}
+
 // DisplayState holds the current display mode and settings
 type DisplayState struct {
-	Mode         string   `json:"mode"`         // 'lif', 'text', or 'screensaver'
+	Mode         string   `json:"mode"`         // 'lif', 'text', 'screensaver', 'lineview', or 'clock'
 	ActiveText   string   `json:"activeText"`   // Text to display
 	ImageBase64  string   `json:"imageBase64"`  // Base64 encoded image for screensaver
 	RotationMode string   `json:"rotationMode"` // 'scroll', 'page', or 'scrollAll'
@@ -140,6 +148,7 @@ type App struct {
 	watcher            *fsnotify.Watcher
 	displayState       *DisplayState
 	customClubAcronyms map[string]string // lowercased full name -> acronym
+	runningClock       RunningClock
 }
 
 // NewApp creates a new App instance.
@@ -1125,6 +1134,63 @@ func getLANIPs() []net.IP {
 	return ips
 }
 
+// startUDPClockListener listens for FinishLynx running clock packets on UDP port 5001.
+// Each packet is pipe-delimited: "<time>|<eventName>".
+// Stopped packets use the format "stopped:<time>|<eventName>" carrying the exact stop time.
+// Once stopped, TimeUpdate packets are ignored for 5 seconds to prevent late overwrites.
+func startUDPClockListener(app *App) {
+	conn, err := net.ListenPacket("udp", ":5001")
+	if err != nil {
+		log.Printf("UDP clock listener: failed to listen on :5001: %v", err)
+		return
+	}
+	defer conn.Close()
+	log.Printf("UDP clock listener: listening on :5001")
+	buf := make([]byte, 1024)
+	var stoppedAt time.Time
+	for {
+		n, _, err := conn.ReadFrom(buf)
+		if err != nil {
+			log.Printf("UDP clock listener: read error: %v", err)
+			continue
+		}
+		packet := strings.TrimSpace(string(buf[:n]))
+		parts := strings.SplitN(packet, "|", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		rawTime := strings.TrimSpace(parts[0])
+		eventName := strings.TrimSpace(parts[1])
+		state := "running"
+		displayTime := rawTime
+
+		if strings.HasPrefix(rawTime, "stopped:") {
+			state = "stopped"
+			displayTime = strings.TrimPrefix(rawTime, "stopped:")
+			stoppedAt = time.Now()
+		} else {
+			switch rawTime {
+			case "armed":
+				state = "armed"
+				displayTime = ""
+				stoppedAt = time.Time{} // reset stop lock on new event
+			case "timeofday":
+				state = "idle"
+				displayTime = ""
+			default:
+				// TimeUpdate / TimeRunning — ignore for 5s after a stop
+				if state == "running" && !stoppedAt.IsZero() && time.Since(stoppedAt) < 5*time.Second {
+					continue
+				}
+			}
+		}
+
+		app.mu.Lock()
+		app.runningClock = RunningClock{State: state, Time: displayTime, EventName: eventName, ReceivedAt: time.Now().UnixMilli()}
+		app.mu.Unlock()
+	}
+}
+
 // startMDNS registers "track.local" via mDNS so LAN devices can reach the server.
 func startMDNS() {
 	ips := getLANIPs()
@@ -1212,6 +1278,20 @@ func StartFiberServer(app *App) {
 		}
 
 		return c.JSON(map[string]interface{}{"success": true})
+	})
+	// API endpoint to get the current FinishLynx running clock state.
+	// serverNow is stamped fresh on each response so clients can compute clock skew.
+	fiberApp.Get("/clock-data", func(c *fiber.Ctx) error {
+		app.mu.Lock()
+		clock := app.runningClock
+		app.mu.Unlock()
+		return c.JSON(map[string]interface{}{
+			"state":      clock.State,
+			"time":       clock.Time,
+			"eventName":  clock.EventName,
+			"receivedAt": clock.ReceivedAt,
+			"serverNow":  time.Now().UnixMilli(),
+		})
 	})
 	// API endpoint to get custom club acronyms.
 	fiberApp.Get("/club-acronyms", func(c *fiber.Ctx) error {
@@ -1306,6 +1386,7 @@ func main() {
 	app := NewApp()
 	go StartFiberServer(app)
 	go startMDNS()
+	go startUDPClockListener(app)
 	err := wails.Run(&options.App{
 		Title:            "PolyField - Track",
 		Width:            800,

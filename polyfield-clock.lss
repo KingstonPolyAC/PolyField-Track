@@ -1,0 +1,42 @@
+; PolyField Running Clock Script
+; Sends current run time and event name to PolyField via UDP
+;
+; FinishLynx Scoreboard Configuration:
+;   Script:        polyfield-clock.lss
+;   Port:          Network (UDP)
+;   IP Address:    <PolyField machine IP>  (use 255.255.255.255 to broadcast on LAN)
+;   Port Number:   5001
+;   Running Time:  Normal
+;   Results:       Off
+;
+; Packet format:  <time>|<eventName>
+;   Running:      0:12.3|100m Men Final
+;   Armed:        armed|100m Men Final
+;   Stopped:      stopped:12.34|100m Men Final  (actual stop time included)
+;   Time of day:  timeofday|<time string>
+;
+; Notes:
+;   - Requires the NCP (Network COM Port) plugin (bundled free since FinishLynx 13.00)
+;   - Time is formatted to tenths of a second while the clock is running (e.g. 0:12.3)
+;   - PolyField firewall must allow inbound UDP on port 5001
+;   - Use a separate scoreboard entry for results output (this script: running time only)
+
+;;TimeArmed
+\11\01armed|
+\13\02%s
+
+;;TimeRunning
+\11\01%s|
+\13\02%s
+
+;;TimeUpdate
+\11\01%s|
+\13\02%s
+
+;;TimeStopped
+\11\01stopped:%s|
+\13\02%s
+
+;;TimeOfDay
+\11\01timeofday|
+\13\02%s
