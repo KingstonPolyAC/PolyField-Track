@@ -5,6 +5,7 @@ A results viewing and display software package for FinishLynx and TimeTronics Ph
 - Runs on **Windows** and **Mac** as a desktop device linked to your photo finish results folder.
 - Enables a **web based user interface** for any device on the network to display results in multiple formats and a **self service kiosk mode** for athletes to search their own results.
 - Keeps the operator in control, only displaying once a result is saved to ensure positive validation of results prior to display. Multiple saves are supported, enabling early display of athletes in distance races, or display once the top 3 athletes have performances assigned.
+- Available in **English, French and Spanish**.
 
 **Download from** - [www.polyfield.co.uk](https://www.polyfield.co.uk)
 **PDF Manual:** - [docs/PolyField-Track-Manual.pdf](docs/PolyField-Track-Manual.pdf)
@@ -57,6 +58,16 @@ The web views are best accessed through the web interface using the access detai
 - **Multi Result Mode** - open the multi-result grid view
 - **Athlete Search** - open the self-service athlete kiosk
 
+### Language
+
+The interface language can be changed at any time from the control panel. Currently supported languages:
+
+| Language | Code |
+|----------|------|
+| English  | EN   |
+| French   | FR   |
+| Spanish  | ES   |
+
 ## Multi Result View
 
 The multi result view displays results in a **2x2** or **3x2** matrix layout.
@@ -67,7 +78,7 @@ The multi result view displays results in a **2x2** or **3x2** matrix layout.
 - Results will paginate with a display of the current page at the top for tracking
 - The **search icon** will take you to the self-service results kiosk
 
-This can also be accessed by directly browsing to `http://<IP-ADDRESS>:3000/athlete`
+This can also be accessed by directly browsing to `http://<IP-ADDRESS>:3000/results`
 
 ## Athlete Search (Kiosk Mode)
 
@@ -81,6 +92,53 @@ A self-service screen where athletes can look up their own results.
 
 Access directly at `http://<IP-ADDRESS>:3000/athlete`
 
+## Speed Dashboard
+
+The speed dashboard calculates and displays the **average speed** of each athlete based on the event distance and their recorded time. Ideal for sprints and hurdles.
+
+- Displays each athlete's speed in **km/h** alongside a visual bar chart
+- **Men's and Women's World Record** pace bars are shown for reference, allowing instant comparison
+- Select any race from the dropdown to view its speed breakdown
+- Accessible from the clock icon in the Results navigation bar, or directly at `http://<IP-ADDRESS>:3000/speed`
+
+## Live Running Clock
+
+PolyField Track can display the **FinishLynx running clock** live on all connected screens, updated in real time as the race progresses. The clock shows hundredths of a second, interpolated smoothly between packets so the display never stutters.
+
+### How it works
+
+- FinishLynx sends the current run time and event name to PolyField via **UDP** using a custom scoreboard script
+- The desktop app receives packets on **port 5001** and serves the current state via its local API
+- All web-connected displays poll this API and interpolate forward at ~60fps for a smooth hundredths display
+- When the photocell fires, the clock freezes at the **exact finish time**
+- The clock reverts automatically to results display when the next LIF file is saved
+
+### FinishLynx Setup
+
+1. Copy `polyfield-clock.lss` (included in each release) to your FinishLynx machine at `C:\Lynx\`
+2. In FinishLynx, add a new **Scoreboard** entry with the following settings:
+
+| Setting | Value |
+|---------|-------|
+| Script | `polyfield-clock.lss` |
+| Port | Network (UDP) |
+| IP Address | PolyField machine IP (or `255.255.255.255` to broadcast on LAN) |
+| Port Number | `5001` |
+| Running Time | Normal |
+| Results | Off |
+
+> **Note:** Requires the **NCP (Network COM Port)** plugin — bundled free with FinishLynx 13.00 and later.
+
+### Displaying the clock
+
+- **Desktop:** Use the **Clock Show** button in the control panel to display the clock in the scoreboard preview window. It behaves like the screensaver — new results automatically switch back to the results display.
+- **Web / LAN displays:** Click the **🕰 clock button** in the bottom navigation bar of the Results view to open the full-screen clock page, or browse directly to `http://<IP-ADDRESS>:3000/clock`. This page is also suitable for use as an **OBS browser source** overlay.
+
+The clock page displays:
+- Event name
+- Running time in **hundredths of a second** (e.g. `12.45`, `1:03.27`)
+- **UNOFFICIAL TIME** label pinned to the bottom
+
 ## Building from Source
 
 ### Prerequisites
@@ -91,22 +149,17 @@ Access directly at `http://<IP-ADDRESS>:3000/athlete`
 
 ### Build Commands
 
-**macOS:**
+**macOS (universal — Intel + Apple Silicon):**
 ```bash
-wails build -platform darwin/amd64 -clean
-```
-
-**macOS Apple Silicon:**
-```bash
-wails build -platform darwin/arm64 -clean
+wails build -platform darwin/universal -o PolyField-Track-mac
 ```
 
 **Windows:**
 ```bash
-wails build -platform windows/amd64 -webview2 embed -clean
+wails build -platform windows/amd64 -o PolyField-Track-windows
 ```
 
-The `-webview2 embed` flag embeds the WebView2 runtime for Windows, ensuring the app works on systems without WebView2 installed.
+> Wails uses the new Go WebView2Loader by default on Windows. If you encounter issues, add `-tags native_webview2loader` to use the legacy loader.
 
 ## Support
 
