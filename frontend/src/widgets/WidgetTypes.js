@@ -68,6 +68,15 @@ export const WIDGET_TYPES = {
     defaultH: 4,
     defaultConfig: {},
   },
+  athlete_speed: {
+    label: 'Athlete Speed',
+    defaultW: 10,
+    defaultH: 12,
+    defaultConfig: {
+      unit: 'kph',
+      maxRows: 8,
+    },
+  },
 };
 
 // Convert grid position to CSS percentage style for absolute positioning

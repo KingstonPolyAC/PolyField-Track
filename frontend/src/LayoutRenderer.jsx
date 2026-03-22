@@ -1,5 +1,6 @@
 import React from 'react';
 import { widgetToStyle } from './widgets/WidgetTypes';
+import { evaluateConditions } from './widgets/conditions';
 import ResultsTableWidget from './widgets/ResultsTableWidget';
 import ClockWidget from './widgets/ClockWidget';
 import EventNameWidget from './widgets/EventNameWidget';
@@ -8,19 +9,21 @@ import CustomTextWidget from './widgets/CustomTextWidget';
 import CustomLogoWidget from './widgets/CustomLogoWidget';
 import TimeOfDayWidget from './widgets/TimeOfDayWidget';
 import AreaMaskWidget from './widgets/AreaMaskWidget';
+import AthleteSpeedWidget from './widgets/AthleteSpeedWidget';
 
 function renderWidget(widget, liveProps, isBuilder) {
   const shared = { key: widget.id, widget, isBuilder, ...liveProps };
   switch (widget.type) {
-    case 'results_table': return <ResultsTableWidget {...shared} />;
-    case 'clock':         return <ClockWidget {...shared} />;
-    case 'event_name':    return <EventNameWidget {...shared} />;
-    case 'wind':          return <WindWidget {...shared} />;
-    case 'custom_text':   return <CustomTextWidget {...shared} />;
-    case 'custom_logo':   return <CustomLogoWidget {...shared} />;
-    case 'time_of_day':   return <TimeOfDayWidget {...shared} />;
-    case 'area_mask':     return <AreaMaskWidget {...shared} />;
-    default:              return null;
+    case 'results_table':  return <ResultsTableWidget {...shared} />;
+    case 'clock':          return <ClockWidget {...shared} />;
+    case 'event_name':     return <EventNameWidget {...shared} />;
+    case 'wind':           return <WindWidget {...shared} />;
+    case 'custom_text':    return <CustomTextWidget {...shared} />;
+    case 'custom_logo':    return <CustomLogoWidget {...shared} />;
+    case 'time_of_day':    return <TimeOfDayWidget {...shared} />;
+    case 'area_mask':      return <AreaMaskWidget {...shared} />;
+    case 'athlete_speed':  return <AthleteSpeedWidget {...shared} />;
+    default:               return null;
   }
 }
 
@@ -77,12 +80,14 @@ export default function LayoutRenderer({
 
   return (
     <div style={outerStyle}>
-      {/* Render all widgets */}
-      {layout.widgets.map(widget => (
-        <div key={widget.id} style={widgetToStyle(widget)}>
-          {renderWidget(widget, liveProps, false)}
-        </div>
-      ))}
+      {/* Render all widgets, filtered by visibility conditions */}
+      {layout.widgets
+        .filter(widget => evaluateConditions(widget, lif, clock))
+        .map(widget => (
+          <div key={widget.id} style={widgetToStyle(widget)}>
+            {renderWidget(widget, liveProps, false)}
+          </div>
+        ))}
 
       {/* Overlay (text/screensaver) clipped to mask zone if defined, otherwise full screen */}
       {overlayContent && (

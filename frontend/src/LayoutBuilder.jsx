@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WIDGET_TYPES, widgetToStyle, clamp } from './widgets/WidgetTypes';
+import { CONDITION_TYPES } from './widgets/conditions';
 import { THEMES } from './themes';
 import ResultsTableWidget from './widgets/ResultsTableWidget';
 import ClockWidget from './widgets/ClockWidget';
@@ -10,6 +11,7 @@ import CustomTextWidget from './widgets/CustomTextWidget';
 import CustomLogoWidget from './widgets/CustomLogoWidget';
 import TimeOfDayWidget from './widgets/TimeOfDayWidget';
 import AreaMaskWidget from './widgets/AreaMaskWidget';
+import AthleteSpeedWidget from './widgets/AthleteSpeedWidget';
 import { useTranslation } from './i18n';
 
 const GRID_COLS = 20;
@@ -44,8 +46,9 @@ function renderWidgetPreview(widget) {
     case 'custom_text':   return <CustomTextWidget {...props} />;
     case 'custom_logo':   return <CustomLogoWidget {...props} />;
     case 'time_of_day':   return <TimeOfDayWidget {...props} />;
-    case 'area_mask':     return <AreaMaskWidget {...props} />;
-    default:              return null;
+    case 'area_mask':      return <AreaMaskWidget {...props} />;
+    case 'athlete_speed':  return <AthleteSpeedWidget {...props} />;
+    default:               return null;
   }
 }
 
@@ -163,6 +166,21 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
         </div>
       )}
 
+      {/* Athlete speed config */}
+      {widget.type === 'athlete_speed' && (
+        <div style={{ marginBottom: '14px' }}>
+          <div style={sectionLabel}>Speed Unit</div>
+          {['kph', 'mph', 'ms'].map(u => (
+            <label key={u} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a0b4c8', fontSize: '0.8em', marginBottom: '4px', cursor: 'pointer' }}>
+              <input type="radio" name="speed-unit" checked={config.unit === u} onChange={() => update('unit', u)} />
+              {u === 'kph' ? 'km/h' : u === 'mph' ? 'mph' : 'm/s'}
+            </label>
+          ))}
+          <div style={{ ...sectionLabel, marginTop: '10px' }}>Max Rows</div>
+          <input type="number" min="1" max="8" value={config.maxRows || 8} onChange={e => update('maxRows', parseInt(e.target.value, 10) || 8)} style={{ ...inputStyle, width: '60px' }} />
+        </div>
+      )}
+
       {/* Logo config */}
       {widget.type === 'custom_logo' && (
         <div style={{ marginBottom: '14px' }}>
@@ -196,9 +214,77 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
         </div>
       )}
 
+      {/* Visibility Conditions */}
+      <ConditionsEditor widget={widget} onUpdate={onUpdate} />
+
       <button onClick={onDelete} style={{ ...smallBtn, backgroundColor: '#7f1d1d', width: '100%', marginTop: '8px' }}>
         Delete Widget
       </button>
+    </div>
+  );
+}
+
+function ConditionsEditor({ widget, onUpdate }) {
+  const [adding, setAdding] = useState(false);
+  const [newType, setNewType] = useState('hasWind');
+  const [newValue, setNewValue] = useState('');
+
+  const conditions = widget.conditions || [];
+  const def = CONDITION_TYPES[newType];
+
+  const addCondition = () => {
+    const c = { id: crypto.randomUUID(), type: newType, value: newValue };
+    onUpdate({ ...widget, conditions: [...conditions, c] });
+    setAdding(false);
+    setNewValue('');
+  };
+
+  const removeCondition = (id) => {
+    onUpdate({ ...widget, conditions: conditions.filter(c => c.id !== id) });
+  };
+
+  return (
+    <div style={{ marginTop: '14px', borderTop: '1px solid #1e3a5f', paddingTop: '10px' }}>
+      <div style={sectionLabel}>Visibility Conditions</div>
+      <div style={{ fontSize: '0.7em', color: '#607d8b', marginBottom: '8px' }}>
+        {conditions.length === 0 ? 'Always visible' : 'Visible when ALL conditions pass'}
+      </div>
+
+      {conditions.map(c => {
+        const label = CONDITION_TYPES[c.type]?.label || c.type;
+        return (
+          <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0a1e38', borderRadius: '4px', padding: '4px 6px', marginBottom: '4px', fontSize: '0.72em', color: '#a0b4c8' }}>
+            <span>{label}{c.value ? `: "${c.value}"` : ''}</span>
+            <button onClick={() => removeCondition(c.id)} style={{ background: 'none', border: 'none', color: '#b71c1c', cursor: 'pointer', fontSize: '1em', lineHeight: 1, padding: '0 2px' }}>×</button>
+          </div>
+        );
+      })}
+
+      {adding ? (
+        <div style={{ backgroundColor: '#0a1e38', borderRadius: '5px', padding: '8px', marginTop: '4px' }}>
+          <select value={newType} onChange={e => { setNewType(e.target.value); setNewValue(''); }} style={{ ...inputStyle, width: '100%', marginBottom: '6px' }}>
+            {Object.entries(CONDITION_TYPES).map(([key, d]) => (
+              <option key={key} value={key}>{d.label}</option>
+            ))}
+          </select>
+          {def?.hasValue && (
+            def.valueOptions ? (
+              <select value={newValue} onChange={e => setNewValue(e.target.value)} style={{ ...inputStyle, width: '100%', marginBottom: '6px' }}>
+                <option value="">— select —</option>
+                {def.valueOptions.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+            ) : (
+              <input type="text" placeholder={def.valueLabel} value={newValue} onChange={e => setNewValue(e.target.value)} style={{ ...inputStyle, width: '100%', marginBottom: '6px' }} />
+            )
+          )}
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button onClick={addCondition} disabled={def?.hasValue && !newValue} style={{ ...smallBtn, flex: 1, backgroundColor: '#1565c0' }}>Add</button>
+            <button onClick={() => setAdding(false)} style={{ ...smallBtn, flex: 1 }}>Cancel</button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setAdding(true)} style={{ ...smallBtn, width: '100%', marginTop: '4px' }}>+ Add Condition</button>
+      )}
     </div>
   );
 }

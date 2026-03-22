@@ -1185,8 +1185,11 @@ func startUDPClockListener(app *App) {
 				displayTime = ""
 				stoppedAt = time.Time{} // reset stop lock on new event
 			case "timeofday":
-				state = "idle"
-				displayTime = ""
+				// FinishLynx sends the TOD string as the eventName field in this packet
+				state = "timeofday"
+				displayTime = eventName
+				eventName = ""
+				stoppedAt = time.Time{}
 			default:
 				// TimeUpdate / TimeRunning — ignore for 5s after a stop
 				if state == "running" && !stoppedAt.IsZero() && time.Since(stoppedAt) < 5*time.Second {
