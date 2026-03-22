@@ -1443,6 +1443,11 @@ function App() {
                 color: '#ffffff', border: 'none', borderRadius: '6px', padding: '6px 14px',
                 cursor: 'pointer', fontSize: '0.85rem',
               }}>{displayMode === 'clock' ? t('clock.clockHide') : t('clock.clockShow')}</button>
+              <button onClick={() => { const { runtime } = window; if (runtime) runtime.BrowserOpenURL('http://127.0.0.1:3000/layout-builder'); else window.open('http://127.0.0.1:3000/layout-builder', '_blank'); }} style={{
+                backgroundColor: '#1565c0',
+                color: '#ffffff', border: 'none', borderRadius: '6px', padding: '6px 14px',
+                cursor: 'pointer', fontSize: '0.85rem',
+              }}>{t('layout.builder')}</button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <label style={{ fontSize: '0.75rem', color: '#a0b4c8', whiteSpace: 'nowrap' }}>Rotation (s)</label>
                 <input

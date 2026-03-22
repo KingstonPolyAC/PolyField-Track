@@ -71,14 +71,24 @@ type RunningClock struct {
 
 // DisplayState holds the current display mode and settings
 type DisplayState struct {
-	Mode         string   `json:"mode"`         // 'lif', 'text', 'screensaver', 'lineview', or 'clock'
-	ActiveText   string   `json:"activeText"`   // Text to display
-	ImageBase64  string   `json:"imageBase64"`  // Base64 encoded image for screensaver
-	RotationMode string   `json:"rotationMode"` // 'scroll', 'page', or 'scrollAll'
-	LayoutTheme  string   `json:"layoutTheme"`  // 'classic', 'modernDark', 'light', or 'highContrast'
-	CurrentLIF   *LifData `json:"currentLIF"`   // Current single event LIF for full screen mode
-	ShowBib      bool     `json:"showBib"`      // Whether to show bib column in tables
-	Language     string   `json:"language"`      // 'en' or 'fr', default 'en'
+	Mode           string   `json:"mode"`           // 'lif', 'text', 'screensaver', 'lineview', 'clock', or 'custom'
+	ActiveText     string   `json:"activeText"`     // Text to display
+	ImageBase64    string   `json:"imageBase64"`    // Base64 encoded image for screensaver
+	RotationMode   string   `json:"rotationMode"`   // 'scroll', 'page', or 'scrollAll'
+	LayoutTheme    string   `json:"layoutTheme"`    // 'classic', 'modernDark', 'light', or 'highContrast'
+	CurrentLIF     *LifData `json:"currentLIF"`     // Current single event LIF for full screen mode
+	ShowBib        bool     `json:"showBib"`        // Whether to show bib column in tables
+	Language       string   `json:"language"`       // 'en', 'fr', or 'es'
+	ActiveLayoutID string   `json:"activeLayoutId"` // Layout ID when mode='custom'
+}
+
+// layoutConfigPath returns the path to the custom layouts JSON file
+func layoutConfigPath() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".polyfield-track", "layouts.json")
 }
 
 // AppConfig holds persistent settings saved to disk
@@ -1277,6 +1287,42 @@ func StartFiberServer(app *App) {
 			log.Printf("Language updated: %s", state.Language)
 		}
 
+		// Track active layout ID when mode is 'custom'
+		if state.ActiveLayoutID != "" {
+			app.mu.Lock()
+			app.displayState.ActiveLayoutID = state.ActiveLayoutID
+			app.mu.Unlock()
+		}
+
+		return c.JSON(map[string]interface{}{"success": true})
+	})
+	// API endpoint to read the saved custom layout configuration.
+	fiberApp.Get("/layout-config", func(c *fiber.Ctx) error {
+		path := layoutConfigPath()
+		if path == "" {
+			return c.JSON(map[string]interface{}{})
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return c.JSON(map[string]interface{}{})
+		}
+		c.Set("Content-Type", "application/json")
+		return c.Send(data)
+	})
+	// API endpoint to save the custom layout configuration.
+	fiberApp.Post("/layout-config", func(c *fiber.Ctx) error {
+		path := layoutConfigPath()
+		if path == "" {
+			return c.Status(500).JSON(map[string]interface{}{"error": "cannot determine config path"})
+		}
+		dir := filepath.Dir(path)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return c.Status(500).JSON(map[string]interface{}{"error": err.Error()})
+		}
+		if err := os.WriteFile(path, c.Body(), 0644); err != nil {
+			return c.Status(500).JSON(map[string]interface{}{"error": err.Error()})
+		}
+		log.Printf("Layout config saved (%d bytes)", len(c.Body()))
 		return c.JSON(map[string]interface{}{"success": true})
 	})
 	// API endpoint to get the current FinishLynx running clock state.

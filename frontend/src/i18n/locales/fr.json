@@ -101,6 +101,20 @@
     "tapToEnlarge": "Appuyer pour agrandir",
     "backToResults": "Retour aux résultats"
   },
+  "layout": {
+    "builder": "Constructeur de mise en page",
+    "newLayout": "Nouvelle mise en page",
+    "deleteLayout": "Supprimer la mise en page",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "addWidget": "Ajouter un widget",
+    "properties": "Propriétés",
+    "saved": "Enregistré",
+    "saving": "Enregistrement…",
+    "unsaved": "Modifications non enregistrées",
+    "export": "Exporter",
+    "import": "Importer"
+  },
   "clock": {
     "unofficialTime": "TEMPS NON OFFICIEL",
     "clockShow": "Afficher horloge",

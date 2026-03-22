@@ -101,6 +101,20 @@
     "tapToEnlarge": "Tap to enlarge",
     "backToResults": "Back to results"
   },
+  "layout": {
+    "builder": "Layout Builder",
+    "newLayout": "New Layout",
+    "deleteLayout": "Delete Layout",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "addWidget": "Add Widget",
+    "properties": "Properties",
+    "saved": "Saved",
+    "saving": "Saving…",
+    "unsaved": "Unsaved changes",
+    "export": "Export",
+    "import": "Import"
+  },
   "clock": {
     "unofficialTime": "UNOFFICIAL TIME",
     "clockShow": "Clock Show",
