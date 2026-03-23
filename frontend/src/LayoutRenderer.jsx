@@ -9,20 +9,22 @@ import CustomTextWidget from './widgets/CustomTextWidget';
 import CustomLogoWidget from './widgets/CustomLogoWidget';
 import TimeOfDayWidget from './widgets/TimeOfDayWidget';
 import AreaMaskWidget from './widgets/AreaMaskWidget';
-import AthleteSpeedWidget from './widgets/AthleteSpeedWidget';
+import ClockStoppedWidget from './widgets/ClockStoppedWidget';
 
 function renderWidget(widget, liveProps, isBuilder) {
   const shared = { key: widget.id, widget, isBuilder, ...liveProps };
   switch (widget.type) {
     case 'results_table':  return <ResultsTableWidget {...shared} />;
     case 'clock':          return <ClockWidget {...shared} />;
-    case 'event_name':     return <EventNameWidget {...shared} />;
-    case 'wind':           return <WindWidget {...shared} />;
+    case 'event_name':        return <EventNameWidget {...shared} />;
+    case 'event_name_result': return <EventNameWidget {...shared} />;
+    case 'wind':              return <WindWidget {...shared} />;
+    case 'wind_current':      return <WindWidget {...shared} />;
     case 'custom_text':    return <CustomTextWidget {...shared} />;
     case 'custom_logo':    return <CustomLogoWidget {...shared} />;
     case 'time_of_day':    return <TimeOfDayWidget {...shared} />;
     case 'area_mask':      return <AreaMaskWidget {...shared} />;
-    case 'athlete_speed':  return <AthleteSpeedWidget {...shared} />;
+    case 'stopped_clock':  return <ClockStoppedWidget {...shared} />;
     default:               return null;
   }
 }

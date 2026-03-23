@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 
-export default function WindWidget({ widget, lif, isBuilder }) {
+// Wind widget — source='lif' reads from the loaded result file, source='clock' reads live
+// wind from the FinishLynx WindReading LSS event. Both wind and wind_current use this component.
+export default function WindWidget({ widget, lif, clock, isBuilder }) {
   const containerRef = useRef(null);
   const [containerH, setContainerH] = useState(0);
 
@@ -12,14 +14,24 @@ export default function WindWidget({ widget, lif, isBuilder }) {
   }, []);
 
   const config = widget.config || {};
+  const source = config.source || 'lif';
   const align = config.align || 'center';
-  const fontSize = Math.min(containerH * 0.55, 80);
-  const wind = isBuilder ? '+1.2 m/s' : (lif?.wind || '—');
-  const color = isBuilder ? '#7ab' : '#a0b4c8';
+  const color = isBuilder ? '#7ab' : (config.color || '#a0b4c8');
+  const bg = config.backgroundColor || undefined;
+  const fontSize = Math.min(containerH * 0.65, 80);
+
+  let wind;
+  if (isBuilder) {
+    wind = '+1.2 m/s';
+  } else if (source === 'clock') {
+    const raw = clock?.wind || '';
+    wind = raw ? raw + ' m/s' : '';
+  } else {
+    wind = lif?.wind || '';
+  }
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center', justifyContent: 'center', padding: '0 8px', overflow: 'hidden', boxSizing: 'border-box', gap: '2px' }}>
-      <div style={{ fontSize: Math.min(containerH * 0.22, 20) + 'px', color: '#607d8b', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Wind</div>
+    <div ref={containerRef} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center', padding: '0 8px', overflow: 'hidden', boxSizing: 'border-box', backgroundColor: bg }}>
       <div style={{ fontSize: fontSize + 'px', color, fontWeight: 'bold', fontFamily: 'monospace', lineHeight: 1 }}>
         {wind}
       </div>

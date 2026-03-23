@@ -6,6 +6,9 @@ import AthleteBoard from './AthleteBoard';
 import Speed from './Speed';
 import Clock from './Clock';
 import LayoutBuilder from './LayoutBuilder';
+import Scoreboard from './Scoreboard';
+import Display from './Display';
+import DisplayIndex from './DisplayIndex';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { I18nProvider } from './i18n';
 import './style.css';
@@ -34,6 +37,9 @@ root.render(
           <Route path="/speed" element={<Speed />} />
           <Route path="/clock" element={<Clock />} />
           <Route path="/layout-builder" element={<LayoutBuilder />} />
+          <Route path="/scoreboard" element={<Scoreboard />} />
+          <Route path="/display" element={<DisplayIndex />} />
+          <Route path="/display/:index" element={<Display />} />
         </Routes>
       </BrowserRouter>
     </I18nProvider>

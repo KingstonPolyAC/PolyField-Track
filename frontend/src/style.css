@@ -2,13 +2,19 @@ html {
     background-color: rgba(27, 38, 54, 1);
     text-align: center;
     color: white;
+    height: 100%;
 }
 
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-  }
+    height: 100%;
+}
+
+#root {
+    height: 100%;
+}
 
 @font-face {
     font-family: "Nunito";

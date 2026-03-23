@@ -1,5 +1,14 @@
 import { useRef, useState, useEffect } from 'react';
 
+// Strip leading zero segments: "0:12.24" → "12.24", "0:09.87" → "9.87", "1:23.45" → "1:23.45"
+export function trimClockTime(str) {
+  if (!str) return str;
+  let s = str;
+  while (s.startsWith('0:')) s = s.slice(2);
+  if (!s.includes(':')) s = s.replace(/^0+(\d)/, '$1');
+  return s || '0';
+}
+
 // Parse a FinishLynx formatted time string to milliseconds.
 // Handles: "s.hh", "m:ss.hh", "h:mm:ss.hh"
 export function parseTimeToMs(timeStr) {
@@ -51,7 +60,7 @@ export function useRunningClock(baseUrl) {
   const clockBaseRef = useRef(null);
   const clockSkewRef = useRef(0); // client clock offset vs server (ms): add to Date.now() to get server time
   const rafRef = useRef(null);
-  const [displayClock, setDisplayClock] = useState({ state: 'idle', time: '', eventName: '' });
+  const [displayClock, setDisplayClock] = useState({ state: 'idle', time: '', eventName: '', wind: '' });
 
   // rAF loop: interpolate forward using server-corrected time
   useEffect(() => {
@@ -64,6 +73,7 @@ export function useRunningClock(baseUrl) {
           state: 'running',
           time: formatMsToTime(base.ms + elapsed),
           eventName: base.eventName,
+          wind: base.wind || '',
         });
       }
       rafRef.current = requestAnimationFrame(tick);
@@ -97,6 +107,7 @@ export function useRunningClock(baseUrl) {
               receivedAt: data.receivedAt || Date.now(),
               state: 'running',
               eventName: data.eventName || '',
+              wind: data.wind || '',
             };
           }
         } else {
@@ -105,6 +116,7 @@ export function useRunningClock(baseUrl) {
             state: data.state || 'idle',
             time: data.time || '',
             eventName: data.eventName || '',
+            wind: data.wind || '',
           });
         }
       } catch (err) {

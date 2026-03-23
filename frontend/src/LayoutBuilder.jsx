@@ -11,7 +11,9 @@ import CustomTextWidget from './widgets/CustomTextWidget';
 import CustomLogoWidget from './widgets/CustomLogoWidget';
 import TimeOfDayWidget from './widgets/TimeOfDayWidget';
 import AreaMaskWidget from './widgets/AreaMaskWidget';
-import AthleteSpeedWidget from './widgets/AthleteSpeedWidget';
+import ClockStoppedWidget from './widgets/ClockStoppedWidget';
+import LayoutRenderer from './LayoutRenderer';
+import { trimClockTime } from './clockUtils';
 import { useTranslation } from './i18n';
 
 const GRID_COLS = 20;
@@ -23,15 +25,48 @@ const BASE_URL = (() => {
   return (h === '' || h === 'wails.localhost' || p === 'wails:') ? 'http://127.0.0.1:3000' : '';
 })();
 
+// --- Mock data for 200m Men Olympic Final preview ---
+const MOCK_LIF = {
+  eventName: '200m Men Final',
+  wind: '+0.4',
+  competitors: [
+    { place: '1', id: '2207', firstName: 'Noah',     lastName: 'Lyles',      affiliation: 'USA', time: '19.70', wind: '+0.4' },
+    { place: '2', id: '1547', firstName: 'Kishane',  lastName: 'Thompson',   affiliation: 'JAM', time: '19.72', wind: '+0.4' },
+    { place: '3', id: '3891', firstName: 'Letsile',  lastName: 'Tebogo',     affiliation: 'BOT', time: '19.87', wind: '+0.4' },
+    { place: '4', id: '2139', firstName: 'Fred',     lastName: 'Kerley',     affiliation: 'USA', time: '19.92', wind: '+0.4' },
+    { place: '5', id: '1822', firstName: 'Kenny',    lastName: 'Bednarek',   affiliation: 'USA', time: '19.94', wind: '+0.4' },
+    { place: '6', id: '1645', firstName: 'Erriyon',  lastName: 'Knighton',   affiliation: 'USA', time: '20.12', wind: '+0.4' },
+    { place: '7', id: '3012', firstName: 'Andre',    lastName: 'De Grasse',  affiliation: 'CAN', time: '20.18', wind: '+0.4' },
+    { place: '8', id: '2756', firstName: 'Luxolo',   lastName: 'Adams',      affiliation: 'RSA', time: '20.35', wind: '+0.4' },
+  ],
+};
+
+const LEAD_TIME = 19.70; // seconds
+
+function formatClockTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = (secs % 60).toFixed(2).padStart(5, '0');
+  return trimClockTime(`${m}:${s}`);
+}
+
 function newId() {
   return crypto.randomUUID();
 }
+
+const ASPECT_RATIOS = [
+  { label: '16:9 — Widescreen',  value: '16:9',  css: '16 / 9'  },
+  { label: '4:3 — Standard',     value: '4:3',   css: '4 / 3'   },
+  { label: '21:9 — Ultrawide',   value: '21:9',  css: '21 / 9'  },
+  { label: '9:16 — Portrait',    value: '9:16',  css: '9 / 16'  },
+  { label: '1:1 — Square',       value: '1:1',   css: '1 / 1'   },
+];
 
 function defaultLayout(name) {
   return {
     id: newId(),
     name: name || 'My Layout',
     theme: 'classic',
+    aspectRatio: '16:9',
     widgets: [],
   };
 }
@@ -41,15 +76,110 @@ function renderWidgetPreview(widget) {
   switch (widget.type) {
     case 'results_table': return <ResultsTableWidget {...props} />;
     case 'clock':         return <ClockWidget {...props} />;
-    case 'event_name':    return <EventNameWidget {...props} />;
-    case 'wind':          return <WindWidget {...props} />;
+    case 'event_name':        return <EventNameWidget {...props} />;
+    case 'event_name_result': return <EventNameWidget {...props} />;
+    case 'wind':              return <WindWidget {...props} />;
+    case 'wind_current':      return <WindWidget {...props} />;
     case 'custom_text':   return <CustomTextWidget {...props} />;
     case 'custom_logo':   return <CustomLogoWidget {...props} />;
     case 'time_of_day':   return <TimeOfDayWidget {...props} />;
-    case 'area_mask':      return <AreaMaskWidget {...props} />;
-    case 'athlete_speed':  return <AthleteSpeedWidget {...props} />;
-    default:               return null;
+    case 'area_mask':     return <AreaMaskWidget {...props} />;
+    case 'stopped_clock': return <ClockStoppedWidget {...props} />;
+    default:              return null;
   }
+}
+
+// ---- Column editor for results table ----
+const ALL_COLUMNS = ['place', 'bib', 'name', 'affiliation', 'time', 'wind', 'speed'];
+const COLUMN_LABELS = {
+  place: 'Place', bib: 'Bib', name: 'Name',
+  affiliation: 'Club', time: 'Time', wind: 'Wind', speed: 'Speed',
+};
+
+function ColumnEditor({ columns, onChange }) {
+  const dragItem = useRef(null);
+  const dragOver = useRef(null);
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleDragStart = (e, idx) => {
+    dragItem.current = idx;
+    e.dataTransfer.effectAllowed = 'move';
+    setDragActive(true);
+  };
+
+  const handleDragOver = (e, idx) => {
+    e.preventDefault();
+    dragOver.current = idx;
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const from = dragItem.current;
+    const to = dragOver.current;
+    if (from !== null && to !== null && from !== to) {
+      const next = [...columns];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      onChange(next);
+    }
+    dragItem.current = null;
+    dragOver.current = null;
+    setDragActive(false);
+  };
+
+  const handleDragEnd = () => {
+    dragItem.current = null;
+    dragOver.current = null;
+    setDragActive(false);
+  };
+
+  const removeCol = (col) => onChange(columns.filter(c => c !== col));
+  const addCol = (col) => onChange([...columns, col]);
+  const available = ALL_COLUMNS.filter(c => !columns.includes(c));
+
+  return (
+    <div>
+      {columns.map((col, idx) => (
+        <div
+          key={col}
+          draggable
+          onDragStart={e => handleDragStart(e, idx)}
+          onDragOver={e => handleDragOver(e, idx)}
+          onDrop={handleDrop}
+          onDragEnd={handleDragEnd}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            backgroundColor: dragActive && dragOver.current === idx ? '#1e3a5f' : '#0a1e38',
+            borderRadius: '4px', padding: '4px 6px', marginBottom: '3px',
+            cursor: 'grab', fontSize: '0.78em', color: '#a0b4c8',
+            border: '1px solid transparent',
+          }}
+        >
+          <span style={{ color: '#607d8b', fontSize: '1em', userSelect: 'none' }}>⋮⋮</span>
+          <span style={{ flex: 1 }}>{COLUMN_LABELS[col] || col}</span>
+          <button
+            onClick={() => removeCol(col)}
+            style={{ background: 'none', border: 'none', color: '#b71c1c', cursor: 'pointer', fontSize: '1em', lineHeight: 1, padding: '0 2px' }}
+          >×</button>
+        </div>
+      ))}
+      {available.length > 0 && (
+        <div style={{ marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          {available.map(col => (
+            <button
+              key={col}
+              onClick={() => addCol(col)}
+              style={{
+                padding: '2px 8px', backgroundColor: '#1a2a3a',
+                border: '1px dashed #1e3a5f', borderRadius: '4px',
+                color: '#607d8b', fontSize: '0.72em', cursor: 'pointer',
+              }}
+            >+ {COLUMN_LABELS[col] || col}</button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ---- Properties Panel ----
@@ -68,7 +198,7 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
   const update = (key, val) => onUpdate({ ...widget, config: { ...config, [key]: val } });
   const updatePos = (key, val) => onUpdate({ ...widget, [key]: Math.max(0, parseInt(val, 10) || 0) });
 
-  const COLS = ['place', 'bib', 'name', 'affiliation', 'time', 'wind'];
+  const hasSpeedCol = (config.columns || []).includes('speed');
 
   return (
     <div style={panelStyle}>
@@ -93,26 +223,36 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
       {widget.type === 'results_table' && (
         <div style={{ marginBottom: '14px' }}>
           <div style={sectionLabel}>Columns</div>
-          {COLS.map(col => (
-            <label key={col} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a0b4c8', fontSize: '0.8em', marginBottom: '4px', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={(config.columns || []).includes(col)}
-                onChange={e => {
-                  const current = config.columns || [];
-                  const next = e.target.checked
-                    ? [...current.filter(c => c !== col), col].sort((a, b) => COLS.indexOf(a) - COLS.indexOf(b))
-                    : current.filter(c => c !== col);
-                  update('columns', next);
-                }}
-              />
-              {col}
-            </label>
-          ))}
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a0b4c8', fontSize: '0.8em', marginTop: '6px', cursor: 'pointer' }}>
+          <div style={{ fontSize: '0.68em', color: '#607d8b', marginBottom: '6px' }}>Drag to reorder · click × to remove</div>
+          <ColumnEditor
+            columns={config.columns || ['place', 'name', 'time']}
+            onChange={cols => update('columns', cols)}
+          />
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a0b4c8', fontSize: '0.8em', marginTop: '8px', cursor: 'pointer' }}>
             <input type="checkbox" checked={config.showHeader !== false} onChange={e => update('showHeader', e.target.checked)} />
             Show event name header
           </label>
+
+          <div style={{ ...sectionLabel, marginTop: '10px' }}>Rows</div>
+          <input
+            type="number" min="1" max="20"
+            value={config.maxRows || 8}
+            onChange={e => update('maxRows', Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 8)))}
+            style={{ ...inputStyle, width: '60px' }}
+          />
+
+          {hasSpeedCol && (
+            <>
+              <div style={{ ...sectionLabel, marginTop: '10px' }}>Speed Unit</div>
+              {[['kph', 'km/h'], ['mph', 'mph'], ['ms', 'm/s']].map(([u, label]) => (
+                <label key={u} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a0b4c8', fontSize: '0.8em', marginBottom: '4px', cursor: 'pointer' }}>
+                  <input type="radio" name="speed-unit" checked={(config.speedUnit || 'kph') === u} onChange={() => update('speedUnit', u)} />
+                  {label}
+                </label>
+              ))}
+            </>
+          )}
         </div>
       )}
 
@@ -137,8 +277,8 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
         </div>
       )}
 
-      {/* Event name / wind align */}
-      {(widget.type === 'event_name' || widget.type === 'wind' || widget.type === 'time_of_day') && (
+      {/* Event name / wind / time of day align */}
+      {(widget.type === 'event_name' || widget.type === 'wind' || widget.type === 'wind_current' || widget.type === 'time_of_day') && (
         <div style={{ marginBottom: '14px' }}>
           <div style={sectionLabel}>Align</div>
           <div style={{ display: 'flex', gap: '4px' }}>
@@ -166,18 +306,37 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
         </div>
       )}
 
-      {/* Athlete speed config */}
-      {widget.type === 'athlete_speed' && (
+      {/* Running clock config */}
+      {widget.type === 'clock' && (
         <div style={{ marginBottom: '14px' }}>
-          <div style={sectionLabel}>Speed Unit</div>
-          {['kph', 'mph', 'ms'].map(u => (
-            <label key={u} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a0b4c8', fontSize: '0.8em', marginBottom: '4px', cursor: 'pointer' }}>
-              <input type="radio" name="speed-unit" checked={config.unit === u} onChange={() => update('unit', u)} />
-              {u === 'kph' ? 'km/h' : u === 'mph' ? 'mph' : 'm/s'}
-            </label>
-          ))}
-          <div style={{ ...sectionLabel, marginTop: '10px' }}>Max Rows</div>
-          <input type="number" min="1" max="8" value={config.maxRows || 8} onChange={e => update('maxRows', parseInt(e.target.value, 10) || 8)} style={{ ...inputStyle, width: '60px' }} />
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a0b4c8', fontSize: '0.8em', marginTop: '8px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={config.stopOnFinish === true}
+              onChange={e => update('stopOnFinish', e.target.checked)}
+            />
+            Stop clock on finish
+          </label>
+          <div style={{ fontSize: '0.68em', color: '#607d8b', marginTop: '3px' }}>
+            Checked: freezes at the FinishLynx photocell time. Unchecked (default): keeps counting after finish. Both hold until the next event loads.
+          </div>
+        </div>
+      )}
+
+      {/* Stopped clock config */}
+      {widget.type === 'stopped_clock' && (
+        <div style={{ marginBottom: '14px' }}>
+          <div style={sectionLabel}>Auto-hide after (seconds)</div>
+          <div style={{ fontSize: '0.68em', color: '#607d8b', marginBottom: '6px' }}>
+            0 = persist until next event is loaded
+          </div>
+          <input
+            type="number" min="0" max="300"
+            value={config.displaySeconds ?? 0}
+            onChange={e => update('displaySeconds', Math.max(0, parseInt(e.target.value, 10) || 0))}
+            style={{ ...inputStyle, width: '70px' }}
+          />
+          <span style={{ fontSize: '0.75em', color: '#607d8b', marginLeft: '6px' }}>seconds</span>
         </div>
       )}
 
@@ -214,12 +373,68 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
         </div>
       )}
 
+      {/* Colours */}
+      <ColourSection widget={widget} config={config} update={update} />
+
       {/* Visibility Conditions */}
       <ConditionsEditor widget={widget} onUpdate={onUpdate} />
 
       <button onClick={onDelete} style={{ ...smallBtn, backgroundColor: '#7f1d1d', width: '100%', marginTop: '8px' }}>
         Delete Widget
       </button>
+    </div>
+  );
+}
+
+function ColorField({ label, value, onChange, onClear }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
+      <span style={{ flex: 1, color: '#a0b4c8', fontSize: '0.78em' }}>{label}</span>
+      <input type="color" value={value || '#000000'} onChange={e => onChange(e.target.value)}
+        style={{ width: '36px', height: '22px', padding: '1px 2px', border: '1px solid #1e3a5f', borderRadius: '3px', backgroundColor: '#0a1628', cursor: 'pointer' }} />
+      {onClear && (
+        <button onClick={onClear} title="Remove" style={{ background: 'none', border: 'none', color: '#607d8b', cursor: 'pointer', fontSize: '0.9em', padding: '0 2px', lineHeight: 1 }}>✕</button>
+      )}
+    </div>
+  );
+}
+
+function ColourSection({ widget, config, update }) {
+  const bg = config.backgroundColor;
+  const hasBg = bg !== undefined && bg !== '';
+
+  return (
+    <div style={{ marginTop: '14px', borderTop: '1px solid #1e3a5f', paddingTop: '10px', marginBottom: '14px' }}>
+      <div style={sectionLabel}>Colours</div>
+
+      {/* Background — all widgets */}
+      <ColorField
+        label="Background"
+        value={hasBg ? bg : '#000000'}
+        onChange={v => update('backgroundColor', v)}
+        onClear={hasBg ? () => update('backgroundColor', '') : undefined}
+      />
+      {!hasBg && <div style={{ fontSize: '0.65em', color: '#607d8b', marginBottom: '6px', marginTop: '-2px' }}>Click colour to add background</div>}
+
+      {/* Text colour — single-colour text widgets */}
+      {['event_name', 'wind', 'wind_current', 'custom_text', 'time_of_day'].includes(widget.type) && (
+        <ColorField label="Text" value={config.color || '#ffffff'} onChange={v => update('color', v)} />
+      )}
+
+      {/* Stopped clock text colour */}
+      {widget.type === 'stopped_clock' && (
+        <ColorField label="Text" value={config.color || '#e0e0e0'} onChange={v => update('color', v)} />
+      )}
+
+      {/* Running clock per-state colours */}
+      {widget.type === 'clock' && (
+        <>
+          <ColorField label="Running"     value={config.colorRunning   || '#1e88e5'} onChange={v => update('colorRunning',   v)} />
+          <ColorField label="Stopped"     value={config.colorStopped   || '#e0e0e0'} onChange={v => update('colorStopped',   v)} />
+          <ColorField label="Ready"       value={config.colorReady     || '#607d8b'} onChange={v => update('colorReady',     v)} />
+          <ColorField label="Time of Day" value={config.colorTimeOfDay || '#e0e0e0'} onChange={v => update('colorTimeOfDay', v)} />
+        </>
+      )}
     </div>
   );
 }
@@ -303,8 +518,13 @@ export default function LayoutBuilder() {
   const [layoutConfig, setLayoutConfig] = useState({ version: 1, activeLayoutId: null, layouts: [] });
   const [selectedLayoutId, setSelectedLayoutId] = useState(null);
   const [selectedWidgetId, setSelectedWidgetId] = useState(null);
-  const [saveStatus, setSaveStatus] = useState('saved'); // 'saved' | 'saving' | 'unsaved'
+  const [saveStatus, setSaveStatus] = useState('saved');
   const [isActive, setIsActive] = useState(false);
+
+  // Preview mode
+  const [previewMode, setPreviewMode] = useState(false);
+  const [mockClock, setMockClock] = useState({ state: 'idle', time: '' });
+  const previewTimers = useRef([]);
 
   const canvasRef = useRef(null);
   const dragging = useRef(null);
@@ -321,7 +541,6 @@ export default function LayoutBuilder() {
           const firstId = data.activeLayoutId || data.layouts[0]?.id || null;
           setSelectedLayoutId(firstId);
         } else {
-          // No layouts yet — create a default one
           const first = defaultLayout('Default Layout');
           const cfg = { version: 1, activeLayoutId: first.id, layouts: [first] };
           setLayoutConfig(cfg);
@@ -335,11 +554,58 @@ export default function LayoutBuilder() {
         setSelectedLayoutId(first.id);
       });
 
-    // Check if custom layout is currently active
     fetch(`${BASE_URL}/display-state`)
       .then(r => r.json())
       .then(s => setIsActive(s.mode === 'custom'))
       .catch(() => {});
+  }, []);
+
+  // Cleanup preview timers on unmount
+  useEffect(() => {
+    return () => {
+      previewTimers.current.forEach(id => clearTimeout(id));
+    };
+  }, []);
+
+  // ---- Preview clock animation ----
+  const startPreview = useCallback(() => {
+    // Cancel any running timers
+    previewTimers.current.forEach(id => clearTimeout(id));
+    previewTimers.current = [];
+
+    setPreviewMode(true);
+    setMockClock({ state: 'idle', time: '' });
+
+    const t1 = setTimeout(() => {
+      setMockClock({ state: 'armed', time: 'READY' });
+
+      const t2 = setTimeout(() => {
+        const startMs = Date.now();
+        setMockClock({ state: 'running', time: '0:00.00' });
+
+        const tick = () => {
+          const elapsed = (Date.now() - startMs) / 1000;
+          if (elapsed >= LEAD_TIME) {
+            setMockClock({ state: 'stopped', time: trimClockTime(`0:${LEAD_TIME.toFixed(2).padStart(5, '0')}`), wind: '+0.4' });
+            return;
+          }
+          setMockClock({ state: 'running', time: formatClockTime(elapsed) });
+          const tN = setTimeout(tick, 50);
+          previewTimers.current.push(tN);
+        };
+        const tN = setTimeout(tick, 50);
+        previewTimers.current.push(tN);
+      }, 800);
+      previewTimers.current.push(t2);
+    }, 600);
+    previewTimers.current.push(t1);
+  }, []);
+
+  const stopPreview = useCallback(() => {
+    previewTimers.current.forEach(id => clearTimeout(id));
+    previewTimers.current = [];
+    setPreviewMode(false);
+    setMockClock({ state: 'idle', time: '' });
   }, []);
 
   // ---- Debounced save ----
@@ -426,7 +692,6 @@ export default function LayoutBuilder() {
       const newX = clamp(gx - offsetX, 0, GRID_COLS - widget.w);
       const newY = clamp(gy - offsetY, 0, GRID_ROWS - widget.h);
       if (newX !== widget.x || newY !== widget.y) {
-        // Update in-place without triggering a debounced save every frame
         setLayoutConfig(prev => ({
           ...prev,
           layouts: prev.layouts.map(l => l.id === selectedLayoutId
@@ -457,7 +722,6 @@ export default function LayoutBuilder() {
     if (dragging.current || resizing.current) {
       dragging.current = null;
       resizing.current = null;
-      // Trigger save after drag/resize ends
       setLayoutConfig(prev => {
         scheduleSave(prev);
         return prev;
@@ -527,6 +791,11 @@ export default function LayoutBuilder() {
     updateCurrentLayout({ ...currentLayout, theme });
   };
 
+  const setAspectRatio = (ar) => {
+    if (!currentLayout) return;
+    updateCurrentLayout({ ...currentLayout, aspectRatio: ar });
+  };
+
   // ---- Activate / Deactivate ----
   const toggleActivate = async () => {
     const newActive = !isActive;
@@ -539,10 +808,9 @@ export default function LayoutBuilder() {
       body: JSON.stringify(body),
     });
     setIsActive(newActive);
-    if (newActive) {
-      const newCfg = { ...layoutConfig, activeLayoutId: selectedLayoutId };
-      updateConfig(newCfg);
-    }
+    // Always persist the activated flag so it survives restarts
+    const newCfg = { ...layoutConfig, activeLayoutId: selectedLayoutId, activated: newActive };
+    updateConfig(newCfg);
   };
 
   // ---- Export / Import ----
@@ -602,11 +870,11 @@ export default function LayoutBuilder() {
 
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px', backgroundColor: '#0d1b2a', borderBottom: '1px solid #1e3a5f', flexShrink: 0, flexWrap: 'wrap' }}>
-        <button onClick={() => navigate('/')} style={{ ...topBtn, backgroundColor: '#1a2a3a' }}>← Back</button>
+        <button onClick={() => { stopPreview(); navigate('/'); }} style={{ ...topBtn, backgroundColor: '#1a2a3a' }}>← Back</button>
 
         <select value={selectedLayoutId || ''} onChange={e => { setSelectedLayoutId(e.target.value); setSelectedWidgetId(null); }} style={{ ...selectStyle, maxWidth: '180px' }}>
-          {layoutConfig.layouts.map(l => (
-            <option key={l.id} value={l.id}>{l.name}</option>
+          {layoutConfig.layouts.map((l, i) => (
+            <option key={l.id} value={l.id}>{l.name} — /display/{i + 1}</option>
           ))}
         </select>
 
@@ -624,19 +892,39 @@ export default function LayoutBuilder() {
         <button onClick={deleteLayout} disabled={layoutConfig.layouts.length <= 1} style={{ ...topBtn, backgroundColor: '#7f1d1d', opacity: layoutConfig.layouts.length <= 1 ? 0.4 : 1 }}>Delete</button>
 
         {currentLayout && (
-          <select value={currentLayout.theme} onChange={e => setTheme(e.target.value)} style={selectStyle}>
-            {Object.entries(THEMES).map(([key, th]) => (
-              <option key={key} value={key}>{th.name}</option>
-            ))}
-          </select>
+          <>
+            <select value={currentLayout.theme} onChange={e => setTheme(e.target.value)} style={selectStyle}>
+              {Object.entries(THEMES).map(([key, th]) => (
+                <option key={key} value={key}>{th.name}</option>
+              ))}
+            </select>
+            <select value={currentLayout.aspectRatio || '16:9'} onChange={e => setAspectRatio(e.target.value)} style={selectStyle} title="Canvas aspect ratio">
+              {ASPECT_RATIOS.map(ar => (
+                <option key={ar.value} value={ar.value}>{ar.label}</option>
+              ))}
+            </select>
+          </>
         )}
 
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '0.72em', color: statusColor }}>● {statusLabel}</span>
+
+          {previewMode ? (
+            <>
+              <button onClick={startPreview} style={{ ...topBtn, backgroundColor: '#1a3a1a' }}>↺ Restart</button>
+              <button onClick={stopPreview} style={{ ...topBtn, backgroundColor: '#4a1a00' }}>Exit Preview</button>
+            </>
+          ) : (
+            <button onClick={startPreview} style={{ ...topBtn, backgroundColor: '#1a3050' }}>Preview</button>
+          )}
+
           <button onClick={exportConfig} style={topBtn}>Export</button>
           <button onClick={importConfig} style={topBtn}>Import</button>
           <button onClick={toggleActivate} style={{ ...topBtn, backgroundColor: isActive ? '#2e7d32' : '#1565c0', minWidth: '90px' }}>
             {isActive ? 'Deactivate' : 'Activate'}
+          </button>
+          <button onClick={() => navigate('/display')} style={{ ...topBtn, backgroundColor: '#1a3a1a' }} title="View all displays">
+            &#128250; Displays
           </button>
         </div>
       </div>
@@ -644,72 +932,109 @@ export default function LayoutBuilder() {
       {/* Main area */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
-        {/* Widget palette */}
-        <div style={{ width: '150px', minWidth: '150px', backgroundColor: '#0d1b2a', borderRight: '1px solid #1e3a5f', padding: '10px', overflowY: 'auto', flexShrink: 0 }}>
-          <div style={{ fontSize: '0.7em', color: '#607d8b', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>Add Widget</div>
-          {Object.entries(WIDGET_TYPES).map(([type, def]) => (
-            <button
-              key={type}
-              onClick={() => addWidget(type)}
-              style={{ display: 'block', width: '100%', marginBottom: '6px', padding: '7px 10px', backgroundColor: '#1a2a3a', border: '1px solid #1e3a5f', borderRadius: '5px', color: '#a0b4c8', cursor: 'pointer', fontSize: '0.78em', textAlign: 'left' }}
-            >
-              + {def.label}
-            </button>
-          ))}
-        </div>
+        {/* Widget palette — hidden in preview mode */}
+        {!previewMode && (
+          <div style={{ width: '150px', minWidth: '150px', backgroundColor: '#0d1b2a', borderRight: '1px solid #1e3a5f', padding: '10px', overflowY: 'auto', flexShrink: 0 }}>
+            <div style={{ fontSize: '0.7em', color: '#607d8b', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>Add Widget</div>
+            {Object.entries(WIDGET_TYPES).map(([type, def]) => (
+              <button
+                key={type}
+                onClick={() => addWidget(type)}
+                style={{ display: 'block', width: '100%', marginBottom: '6px', padding: '7px 10px', backgroundColor: '#1a2a3a', border: '1px solid #1e3a5f', borderRadius: '5px', color: '#a0b4c8', cursor: 'pointer', fontSize: '0.78em', textAlign: 'left' }}
+              >
+                + {def.label}
+              </button>
+            ))}
+          </div>
+        )}
 
-        {/* Canvas */}
-        <div style={{ flex: 1, position: 'relative', overflow: 'hidden', backgroundColor: '#060e1a' }}>
-          <div
-            ref={canvasRef}
-            style={{ position: 'absolute', inset: 0, cursor: dragging.current ? 'grabbing' : 'default' }}
-            onClick={() => setSelectedWidgetId(null)}
-          >
-            <GridLines />
-
-            {currentLayout?.widgets.map(widget => {
-              const isSelected = widget.id === selectedWidgetId;
-              return (
-                <div
-                  key={widget.id}
-                  style={{
-                    ...widgetToStyle(widget),
-                    border: isSelected ? '2px solid #1e88e5' : '1px solid #1e3a5f',
-                    cursor: 'grab',
-                    zIndex: isSelected ? 5 : 1,
-                    boxSizing: 'border-box',
-                  }}
-                  onMouseDown={e => handleWidgetMouseDown(e, widget)}
-                  onClick={e => { e.stopPropagation(); setSelectedWidgetId(widget.id); }}
-                >
-                  {renderWidgetPreview(widget)}
-
-                  {/* Widget label */}
-                  <div style={{ position: 'absolute', top: 2, left: 4, fontSize: '9px', color: '#607d8b', pointerEvents: 'none', userSelect: 'none', letterSpacing: '0.05em' }}>
-                    {WIDGET_TYPES[widget.type]?.label}
-                  </div>
-
-                  {/* Resize handle */}
-                  <div
-                    style={{ position: 'absolute', bottom: 0, right: 0, width: '14px', height: '14px', cursor: 'nwse-resize', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    onMouseDown={e => handleResizeMouseDown(e, widget)}
-                  >
-                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                      <path d="M1 7L7 1M4 7L7 4M7 7L7 7" stroke="#607d8b" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                  </div>
+        {/* Canvas / Preview */}
+        {(() => {
+          const arValue = currentLayout?.aspectRatio || '16:9';
+          const arDef = ASPECT_RATIOS.find(a => a.value === arValue) || ASPECT_RATIOS[0];
+          const [arW, arH] = arDef.css.split('/').map(n => parseFloat(n.trim()));
+          const isPortrait = arH > arW;
+          return (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: '#060e1a' }}>
+          <div style={{ aspectRatio: arDef.css, width: isPortrait ? 'auto' : '100%', height: isPortrait ? '100%' : 'auto', maxWidth: '100%', maxHeight: '100%', position: 'relative', backgroundColor: '#000', outline: '1px solid #1e3a5f', overflow: 'hidden' }}>
+          {previewMode ? (
+            /* Preview: render layout with mock data */
+            <div style={{ position: 'absolute', inset: 0 }}>
+              {currentLayout ? (
+                <LayoutRenderer
+                  layout={currentLayout}
+                  lif={MOCK_LIF}
+                  clock={mockClock}
+                  customAcronyms={{}}
+                />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#607d8b' }}>
+                  No layout selected
                 </div>
-              );
-            })}
+              )}
+              {/* Preview overlay: mock data label */}
+              <div style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', backgroundColor: 'rgba(0,0,0,0.6)', color: '#607d8b', fontSize: '0.7em', padding: '4px 12px', borderRadius: '12px', pointerEvents: 'none', letterSpacing: '0.06em' }}>
+                PREVIEW · 200m Men Final · Paris 2024
+              </div>
+            </div>
+          ) : (
+            /* Builder canvas */
+            <div
+              ref={canvasRef}
+              style={{ position: 'absolute', inset: 0, cursor: dragging.current ? 'grabbing' : 'default' }}
+              onClick={() => setSelectedWidgetId(null)}
+            >
+              <GridLines />
+
+              {currentLayout?.widgets.map(widget => {
+                const isSelected = widget.id === selectedWidgetId;
+                return (
+                  <div
+                    key={widget.id}
+                    style={{
+                      ...widgetToStyle(widget),
+                      border: isSelected ? '2px solid #1e88e5' : '1px solid #1e3a5f',
+                      cursor: 'grab',
+                      zIndex: isSelected ? 5 : 1,
+                      boxSizing: 'border-box',
+                    }}
+                    onMouseDown={e => handleWidgetMouseDown(e, widget)}
+                    onClick={e => { e.stopPropagation(); setSelectedWidgetId(widget.id); }}
+                  >
+                    {renderWidgetPreview(widget)}
+
+                    {/* Widget label */}
+                    <div style={{ position: 'absolute', top: 2, left: 4, fontSize: '9px', color: '#607d8b', pointerEvents: 'none', userSelect: 'none', letterSpacing: '0.05em' }}>
+                      {WIDGET_TYPES[widget.type]?.label}
+                    </div>
+
+                    {/* Resize handle */}
+                    <div
+                      style={{ position: 'absolute', bottom: 0, right: 0, width: '14px', height: '14px', cursor: 'nwse-resize', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      onMouseDown={e => handleResizeMouseDown(e, widget)}
+                    >
+                      <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                        <path d="M1 7L7 1M4 7L7 4M7 7L7 7" stroke="#607d8b" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           </div>
         </div>
+          );
+        })()}
 
-        {/* Properties panel */}
-        <PropertiesPanel
-          widget={selectedWidget}
-          onUpdate={updateWidget}
-          onDelete={deleteWidget}
-        />
+        {/* Properties panel — hidden in preview mode */}
+        {!previewMode && (
+          <PropertiesPanel
+            widget={selectedWidget}
+            onUpdate={updateWidget}
+            onDelete={deleteWidget}
+          />
+        )}
       </div>
     </div>
   );

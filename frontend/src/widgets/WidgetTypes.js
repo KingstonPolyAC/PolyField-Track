@@ -9,28 +9,64 @@ export const WIDGET_TYPES = {
     defaultConfig: {
       columns: ['place', 'name', 'affiliation', 'time'],
       showHeader: true,
+      maxRows: 8,
+      speedUnit: 'kph',
     },
   },
   clock: {
     label: 'Running Clock',
     defaultW: 10,
     defaultH: 7,
-    defaultConfig: {},
+    defaultConfig: {
+      colorRunning:   '#1e88e5',
+      colorStopped:   '#e0e0e0',
+      colorReady:     '#607d8b',
+      colorTimeOfDay: '#e0e0e0',
+      backgroundColor: '#000000',
+    },
   },
   event_name: {
-    label: 'Event Name',
+    label: 'Event Name (Current)',
     defaultW: 10,
     defaultH: 3,
     defaultConfig: {
+      source: 'clock',
       align: 'center',
+      color: '#ffffff',
+      backgroundColor: '',
+    },
+  },
+  event_name_result: {
+    label: 'Event Name (Result)',
+    defaultW: 10,
+    defaultH: 3,
+    defaultConfig: {
+      source: 'lif',
+      align: 'center',
+      color: '#ffffff',
+      backgroundColor: '',
     },
   },
   wind: {
-    label: 'Wind',
+    label: 'Wind (Result)',
     defaultW: 5,
     defaultH: 3,
     defaultConfig: {
+      source: 'lif',
       align: 'center',
+      color: '#a0b4c8',
+      backgroundColor: '',
+    },
+  },
+  wind_current: {
+    label: 'Wind (Current)',
+    defaultW: 5,
+    defaultH: 3,
+    defaultConfig: {
+      source: 'clock',
+      align: 'center',
+      color: '#a0b4c8',
+      backgroundColor: '',
     },
   },
   custom_text: {
@@ -41,6 +77,7 @@ export const WIDGET_TYPES = {
       text: 'Custom Text',
       color: '#ffffff',
       align: 'center',
+      backgroundColor: '',
     },
   },
   custom_logo: {
@@ -50,6 +87,7 @@ export const WIDGET_TYPES = {
     defaultConfig: {
       imageBase64: '',
       fit: 'contain',
+      backgroundColor: '',
     },
   },
   time_of_day: {
@@ -60,21 +98,25 @@ export const WIDGET_TYPES = {
       format: 'HH:MM:SS',
       color: '#ffffff',
       align: 'center',
+      backgroundColor: '',
     },
   },
   area_mask: {
     label: 'Overlay Area',
     defaultW: 20,
     defaultH: 4,
-    defaultConfig: {},
-  },
-  athlete_speed: {
-    label: 'Athlete Speed',
-    defaultW: 10,
-    defaultH: 12,
     defaultConfig: {
-      unit: 'kph',
-      maxRows: 8,
+      backgroundColor: '',
+    },
+  },
+  stopped_clock: {
+    label: 'Stopped Time',
+    defaultW: 10,
+    defaultH: 7,
+    defaultConfig: {
+      displaySeconds: 0,
+      color: '#e0e0e0',
+      backgroundColor: '#000000',
     },
   },
 };

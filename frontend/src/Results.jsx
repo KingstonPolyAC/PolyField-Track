@@ -869,9 +869,12 @@ function Results() {
               <div>
                 <button className="btn btn-primary mx-1" onClick={() => navigate("/")}>{t('common.back')}</button>
                 <button className="btn btn-primary mx-1" onClick={() => navigate("/athlete")} title="Athlete Search">&#128269;</button>
-                <button className="btn btn-primary mx-1" onClick={() => navigate("/speed")} title="Speed Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style={{verticalAlign:'middle'}}><path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Z"/><path d="M8 4a.5.5 0 0 1 .5.5v3.793l2.354 2.353a.5.5 0 0 1-.708.708L7.854 9.061A.5.5 0 0 1 7.5 8.5v-4A.5.5 0 0 1 8 4Z" transform="rotate(-45 8 8)"/></svg></button>
+                {/* Speed — gauge/dial icon */}
+                <button className="btn btn-primary mx-1" onClick={() => navigate("/speed")} title="Speed Dashboard"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style={{verticalAlign:'middle'}}><path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Z"/><path d="M4.5 11a.5.5 0 0 1-.354-.854l3-3a.5.5 0 0 1 .707 0l1 1 2.5-2.5a.5.5 0 0 1 .707.707l-2.854 2.854a.5.5 0 0 1-.707 0l-1-1-2.646 2.647A.5.5 0 0 1 4.5 11Z"/></svg></button>
                 <button className="btn btn-primary mx-1" onClick={() => navigate("/clock")} title={t('clock.runningClock')}>&#128336;</button>
                 <button className="btn btn-primary mx-1" onClick={() => navigate("/layout-builder")} title={t('layout.builder')}>&#9881;</button>
+                {/* Displays — screen icon */}
+                <button className="btn btn-primary mx-1" onClick={() => navigate("/display")} title="Display Layouts"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style={{verticalAlign:'middle'}}><path d="M0 4s0-2 2-2h12s2 0 2 2v6s0 2-2 2h-4q0 1 .25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75Q6 13 6 12H2s-2 0-2-2zm1.398 6.851A1.5 1.5 0 0 0 2 11h12a1.5 1.5 0 0 0 .602-.149A.5.5 0 0 0 15 10.5V4.272a.5.5 0 0 0-.145-.354A1.5 1.5 0 0 0 14 3.5H2a1.5 1.5 0 0 0-.855.272A.5.5 0 0 0 1 4.272V10.5a.5.5 0 0 0 .398.351z"/></svg></button>
               </div>
 
               {/* Desktop-only controls */}

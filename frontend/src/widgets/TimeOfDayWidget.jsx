@@ -27,16 +27,16 @@ export default function TimeOfDayWidget({ widget, isBuilder }) {
 
   const config = widget.config || {};
   const format = config.format || 'HH:MM:SS';
-  const color = config.color || '#ffffff';
+  const color = isBuilder ? '#7ab' : (config.color || '#ffffff');
   const align = config.align || 'center';
+  const bg = config.backgroundColor || undefined;
 
   const timeStr = isBuilder ? '12:34:56' : formatTime(now, format);
-  const charCount = timeStr.length;
-  const fontSize = Math.min(containerH * 0.65, containerH * 0.65, 120);
+  const fontSize = Math.min(containerH * 0.65, 120);
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center', padding: '0 8px', overflow: 'hidden', boxSizing: 'border-box' }}>
-      <div style={{ fontSize: fontSize + 'px', color: isBuilder ? '#7ab' : color, fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1 }}>
+    <div ref={containerRef} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center', padding: '0 8px', overflow: 'hidden', boxSizing: 'border-box', backgroundColor: bg }}>
+      <div style={{ fontSize: fontSize + 'px', color, fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1 }}>
         {timeStr}
       </div>
     </div>
