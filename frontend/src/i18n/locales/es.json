@@ -101,6 +101,20 @@
     "tapToEnlarge": "Toque para ampliar",
     "backToResults": "Volver a los resultados"
   },
+  "layout": {
+    "builder": "Constructor de diseño",
+    "newLayout": "Nuevo diseño",
+    "deleteLayout": "Eliminar diseño",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "addWidget": "Añadir widget",
+    "properties": "Propiedades",
+    "saved": "Guardado",
+    "saving": "Guardando…",
+    "unsaved": "Cambios sin guardar",
+    "export": "Exportar",
+    "import": "Importar"
+  },
   "clock": {
     "unofficialTime": "TIEMPO NO OFICIAL",
     "clockShow": "Mostrar reloj",

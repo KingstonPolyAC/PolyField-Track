@@ -69,6 +69,7 @@ export namespace main {
 	    currentLIF?: LifData;
 	    showBib: boolean;
 	    language: string;
+	    activeLayoutId: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new DisplayState(source);
@@ -84,6 +85,7 @@ export namespace main {
 	        this.currentLIF = this.convertValues(source["currentLIF"], LifData);
 	        this.showBib = source["showBib"];
 	        this.language = source["language"];
+	        this.activeLayoutId = source["activeLayoutId"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

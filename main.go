@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	sysRuntime "runtime"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -66,19 +67,30 @@ type RunningClock struct {
 	State      string `json:"state"`      // "armed", "running", "stopped", "idle"
 	Time       string `json:"time"`       // formatted time e.g. "0:12.34"
 	EventName  string `json:"eventName"`  // e.g. "100m Men Final"
+	Wind       string `json:"wind"`       // live wind reading from WindReading LSS event, e.g. "+1.2"
 	ReceivedAt int64  `json:"receivedAt"` // Unix ms when UDP packet was received
 }
 
 // DisplayState holds the current display mode and settings
 type DisplayState struct {
-	Mode         string   `json:"mode"`         // 'lif', 'text', 'screensaver', 'lineview', or 'clock'
-	ActiveText   string   `json:"activeText"`   // Text to display
-	ImageBase64  string   `json:"imageBase64"`  // Base64 encoded image for screensaver
-	RotationMode string   `json:"rotationMode"` // 'scroll', 'page', or 'scrollAll'
-	LayoutTheme  string   `json:"layoutTheme"`  // 'classic', 'modernDark', 'light', or 'highContrast'
-	CurrentLIF   *LifData `json:"currentLIF"`   // Current single event LIF for full screen mode
-	ShowBib      bool     `json:"showBib"`      // Whether to show bib column in tables
-	Language     string   `json:"language"`      // 'en' or 'fr', default 'en'
+	Mode           string   `json:"mode"`           // 'lif', 'text', 'screensaver', 'lineview', 'clock', or 'custom'
+	ActiveText     string   `json:"activeText"`     // Text to display
+	ImageBase64    string   `json:"imageBase64"`    // Base64 encoded image for screensaver
+	RotationMode   string   `json:"rotationMode"`   // 'scroll', 'page', or 'scrollAll'
+	LayoutTheme    string   `json:"layoutTheme"`    // 'classic', 'modernDark', 'light', or 'highContrast'
+	CurrentLIF     *LifData `json:"currentLIF"`     // Current single event LIF for full screen mode
+	ShowBib        bool     `json:"showBib"`        // Whether to show bib column in tables
+	Language       string   `json:"language"`       // 'en', 'fr', or 'es'
+	ActiveLayoutID string   `json:"activeLayoutId"` // Layout ID when mode='custom'
+}
+
+// layoutConfigPath returns the path to the custom layouts JSON file
+func layoutConfigPath() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".polyfield-track", "layouts.json")
 }
 
 // AppConfig holds persistent settings saved to disk
@@ -154,7 +166,7 @@ type App struct {
 // NewApp creates a new App instance.
 func NewApp() *App {
 	cfg := loadConfig()
-	return &App{
+	app := &App{
 		displayState: &DisplayState{
 			Mode:         "lif",
 			ActiveText:   "",
@@ -167,6 +179,10 @@ func NewApp() *App {
 		monitoredDir:       cfg.MonitoredDir,
 		customClubAcronyms: make(map[string]string),
 	}
+	// Restore active layout before the HTTP server starts accepting requests
+	// so the first /display-state poll always sees the correct mode.
+	app.restoreActiveLayout()
+	return app
 }
 
 // SetDisplayState updates the current display state (called from frontend)
@@ -302,6 +318,31 @@ func (a *App) startup(ctx context.Context) {
 			log.Printf("Saved directory no longer exists: %s", a.monitoredDir)
 			a.monitoredDir = ""
 		}
+	}
+
+}
+
+// restoreActiveLayout reads the layout config and re-activates the custom layout
+// if it was marked as activated when the app was last closed.
+func (a *App) restoreActiveLayout() {
+	path := layoutConfigPath()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return
+	}
+	var cfg struct {
+		Activated      bool   `json:"activated"`
+		ActiveLayoutID string `json:"activeLayoutId"`
+	}
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return
+	}
+	if cfg.Activated && cfg.ActiveLayoutID != "" {
+		a.mu.Lock()
+		a.displayState.Mode = "custom"
+		a.displayState.ActiveLayoutID = cfg.ActiveLayoutID
+		a.mu.Unlock()
+		log.Printf("Restored active custom layout: %s", cfg.ActiveLayoutID)
 	}
 }
 
@@ -510,6 +551,10 @@ func (a *App) watchDirectory() {
 				}
 				a.mu.Lock()
 				a.latestData = data
+				// Keep running clock event name in sync with the loaded LIF file
+				if data != nil && data.EventName != "" {
+					a.runningClock.EventName = data.EventName
+				}
 				a.mu.Unlock()
 			}
 		case err, ok := <-watcher.Errors:
@@ -1134,9 +1179,14 @@ func getLANIPs() []net.IP {
 	return ips
 }
 
+// todTimeRe extracts the time-of-day portion (H:MM:SS or HH:MM:SS with optional decimals)
+// from the FinishLynx TimeOfDay packet, which can include extra fields like event name and wind.
+var todTimeRe = regexp.MustCompile(`\b\d{1,2}:\d{2}:\d{2}(?:\.\d+)?\b`)
+
 // startUDPClockListener listens for FinishLynx running clock packets on UDP port 5001.
 // Each packet is pipe-delimited: "<time>|<eventName>".
 // Stopped packets use the format "stopped:<time>|<eventName>" carrying the exact stop time.
+// Wind packets use the format "wind:<value>|<eventName>" from the ;;WindReading LSS event.
 // Once stopped, TimeUpdate packets are ignored for 5 seconds to prevent late overwrites.
 func startUDPClockListener(app *App) {
 	conn, err := net.ListenPacket("udp", ":5001")
@@ -1148,13 +1198,26 @@ func startUDPClockListener(app *App) {
 	log.Printf("UDP clock listener: listening on :5001")
 	buf := make([]byte, 1024)
 	var stoppedAt time.Time
+	var currentWind string // persists until next armed event
 	for {
 		n, _, err := conn.ReadFrom(buf)
 		if err != nil {
 			log.Printf("UDP clock listener: read error: %v", err)
 			continue
 		}
-		packet := strings.TrimSpace(string(buf[:n]))
+		// Strip all non-printable-ASCII bytes. FinishLynx NCP appends binary-encoded
+		// metadata after the pipe separator; keeping only 0x20-0x7E gives us clean text.
+		raw := buf[:n]
+		filtered := raw[:0:len(raw)]
+		for _, b := range raw {
+			if b >= 0x20 && b <= 0x7E {
+				filtered = append(filtered, b)
+			}
+		}
+		packet := strings.TrimSpace(string(filtered))
+		if packet == "" {
+			continue
+		}
 		parts := strings.SplitN(packet, "|", 2)
 		if len(parts) != 2 {
 			continue
@@ -1163,6 +1226,15 @@ func startUDPClockListener(app *App) {
 		eventName := strings.TrimSpace(parts[1])
 		state := "running"
 		displayTime := rawTime
+
+		// Wind reading packet — update wind and continue without changing clock state
+		if strings.HasPrefix(rawTime, "wind:") {
+			currentWind = strings.TrimSpace(strings.TrimPrefix(rawTime, "wind:"))
+			app.mu.Lock()
+			app.runningClock.Wind = currentWind
+			app.mu.Unlock()
+			continue
+		}
 
 		if strings.HasPrefix(rawTime, "stopped:") {
 			state = "stopped"
@@ -1173,10 +1245,24 @@ func startUDPClockListener(app *App) {
 			case "armed":
 				state = "armed"
 				displayTime = ""
+				currentWind = "" // clear wind on new event
 				stoppedAt = time.Time{} // reset stop lock on new event
 			case "timeofday":
-				state = "idle"
-				displayTime = ""
+				// FinishLynx sends the TOD string as the eventName field in this packet.
+				// The %s substitution can include extra fields (event name, wind, etc.) so
+				// extract just the HH:MM:SS portion using a regex.
+				state = "timeofday"
+				if m := todTimeRe.FindString(eventName); m != "" {
+					// Strip any decimal/tenths — show HH:MM:SS only
+					if dot := strings.Index(m, "."); dot >= 0 {
+						m = m[:dot]
+					}
+					displayTime = m
+				} else {
+					displayTime = eventName
+				}
+				eventName = ""
+				stoppedAt = time.Time{}
 			default:
 				// TimeUpdate / TimeRunning — ignore for 5s after a stop
 				if state == "running" && !stoppedAt.IsZero() && time.Since(stoppedAt) < 5*time.Second {
@@ -1186,7 +1272,10 @@ func startUDPClockListener(app *App) {
 		}
 
 		app.mu.Lock()
-		app.runningClock = RunningClock{State: state, Time: displayTime, EventName: eventName, ReceivedAt: time.Now().UnixMilli()}
+		if eventName == "" {
+			eventName = app.runningClock.EventName // preserve last known event name
+		}
+		app.runningClock = RunningClock{State: state, Time: displayTime, EventName: eventName, Wind: currentWind, ReceivedAt: time.Now().UnixMilli()}
 		app.mu.Unlock()
 	}
 }
@@ -1277,6 +1366,42 @@ func StartFiberServer(app *App) {
 			log.Printf("Language updated: %s", state.Language)
 		}
 
+		// Track active layout ID when mode is 'custom'
+		if state.ActiveLayoutID != "" {
+			app.mu.Lock()
+			app.displayState.ActiveLayoutID = state.ActiveLayoutID
+			app.mu.Unlock()
+		}
+
+		return c.JSON(map[string]interface{}{"success": true})
+	})
+	// API endpoint to read the saved custom layout configuration.
+	fiberApp.Get("/layout-config", func(c *fiber.Ctx) error {
+		path := layoutConfigPath()
+		if path == "" {
+			return c.JSON(map[string]interface{}{})
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return c.JSON(map[string]interface{}{})
+		}
+		c.Set("Content-Type", "application/json")
+		return c.Send(data)
+	})
+	// API endpoint to save the custom layout configuration.
+	fiberApp.Post("/layout-config", func(c *fiber.Ctx) error {
+		path := layoutConfigPath()
+		if path == "" {
+			return c.Status(500).JSON(map[string]interface{}{"error": "cannot determine config path"})
+		}
+		dir := filepath.Dir(path)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return c.Status(500).JSON(map[string]interface{}{"error": err.Error()})
+		}
+		if err := os.WriteFile(path, c.Body(), 0644); err != nil {
+			return c.Status(500).JSON(map[string]interface{}{"error": err.Error()})
+		}
+		log.Printf("Layout config saved (%d bytes)", len(c.Body()))
 		return c.JSON(map[string]interface{}{"success": true})
 	})
 	// API endpoint to get the current FinishLynx running clock state.
@@ -1289,6 +1414,7 @@ func StartFiberServer(app *App) {
 			"state":      clock.State,
 			"time":       clock.Time,
 			"eventName":  clock.EventName,
+			"wind":       clock.Wind,
 			"receivedAt": clock.ReceivedAt,
 			"serverNow":  time.Now().UnixMilli(),
 		})

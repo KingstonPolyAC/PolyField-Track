@@ -34,8 +34,10 @@ function Clock() {
   const isRunning = runningClock.state === 'running';
   const isStopped = runningClock.state === 'stopped';
   const isArmed = runningClock.state === 'armed';
+  const isTimeOfDay = runningClock.state === 'timeofday';
   const timeDisplay = runningClock.time || (isArmed ? t('clock.ready') : '—');
-  const timeColor = isRunning ? '#1e88e5' : isStopped ? '#e0e0e0' : '#607d8b';
+  const timeColor = isRunning ? '#1e88e5' : isStopped ? '#e0e0e0' : isTimeOfDay ? '#e0e0e0' : '#607d8b';
+  const charCount = timeDisplay.length || 4;
 
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -52,20 +54,34 @@ function Clock() {
         </div>
       )}
 
-      {/* Event name + time centred */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '2vh' }}>
-        <div style={{ fontSize: '4vw', color: '#a0b4c8', letterSpacing: '0.08em', textAlign: 'center', padding: '0 4vw' }}>
-          {runningClock.eventName || '—'}
+      {/* Time of Day mode */}
+      {isTimeOfDay ? (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '1vh' }}>
+          <div style={{ fontSize: '2.5vw', color: '#607d8b', letterSpacing: '0.15em' }}>TIME OF DAY</div>
+          <div style={{ fontSize: `${Math.min(22, Math.floor(130 / charCount))}vw`, fontWeight: 'bold', fontFamily: 'monospace', color: '#e0e0e0', lineHeight: 1 }}>
+            {timeDisplay}
+          </div>
         </div>
-        <div style={{ fontSize: `${Math.min(22, Math.floor(130 / (timeDisplay.length || 4)))}vw`, fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '0.03em', color: timeColor, lineHeight: 1 }}>
-          {timeDisplay}
-        </div>
-      </div>
+      ) : (
+        <>
+          {/* Event name + time centred */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '2vh' }}>
+            <div style={{ fontSize: '4vw', color: '#a0b4c8', letterSpacing: '0.08em', textAlign: 'center', padding: '0 4vw' }}>
+              {runningClock.eventName || '—'}
+            </div>
+            <div style={{ fontSize: `${Math.min(22, Math.floor(130 / charCount))}vw`, fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '0.03em', color: timeColor, lineHeight: 1 }}>
+              {timeDisplay}
+            </div>
+          </div>
 
-      {/* UNOFFICIAL TIME pinned to bottom */}
-      <div style={{ paddingBottom: '3vh', fontSize: '2.2vw', color: '#f59e0b', letterSpacing: '0.15em' }}>
-        {t('clock.unofficialTime')}
-      </div>
+          {/* UNOFFICIAL TIME — only shown when running or stopped */}
+          {(isRunning || isStopped) && (
+            <div style={{ paddingBottom: '3vh', fontSize: '2.2vw', color: '#f59e0b', letterSpacing: '0.15em' }}>
+              {t('clock.unofficialTime')}
+            </div>
+          )}
+        </>
+      )}
 
     </div>
   );
