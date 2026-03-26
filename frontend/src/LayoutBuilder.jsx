@@ -12,6 +12,8 @@ import CustomLogoWidget from './widgets/CustomLogoWidget';
 import TimeOfDayWidget from './widgets/TimeOfDayWidget';
 import AreaMaskWidget from './widgets/AreaMaskWidget';
 import ClockStoppedWidget from './widgets/ClockStoppedWidget';
+import StartListWidget, { ALL_STARTLIST_COLUMNS } from './widgets/StartListWidget';
+import OverlayWidget from './widgets/OverlayWidget';
 import LayoutRenderer from './LayoutRenderer';
 import { trimClockTime } from './clockUtils';
 import { useTranslation } from './i18n';
@@ -41,6 +43,21 @@ const MOCK_LIF = {
   ],
 };
 
+const MOCK_STARTLIST = {
+  eventName: '100m Men Final',
+  hasLanes: true,
+  entries: [
+    { lane: '1', id: '2207', firstName: 'Noah',    lastName: 'Lyles',    affiliation: 'USA' },
+    { lane: '2', id: '1547', firstName: 'Kishane', lastName: 'Thompson', affiliation: 'JAM' },
+    { lane: '3', id: '3891', firstName: 'Letsile', lastName: 'Tebogo',   affiliation: 'BOT' },
+    { lane: '4', id: '2139', firstName: 'Fred',    lastName: 'Kerley',   affiliation: 'USA' },
+    { lane: '5', id: '1822', firstName: 'Kenny',   lastName: 'Bednarek', affiliation: 'USA' },
+    { lane: '6', id: '1645', firstName: 'Erriyon', lastName: 'Knighton', affiliation: 'USA' },
+    { lane: '7', id: '3012', firstName: 'Andre',   lastName: 'De Grasse', affiliation: 'CAN' },
+    { lane: '8', id: '2756', firstName: 'Luxolo',  lastName: 'Adams',    affiliation: 'RSA' },
+  ],
+};
+
 const LEAD_TIME = 19.70; // seconds
 
 function formatClockTime(secs) {
@@ -65,14 +82,14 @@ function defaultLayout(name) {
   return {
     id: newId(),
     name: name || 'My Layout',
-    theme: 'classic',
+    theme: 'modernDark',
     aspectRatio: '16:9',
     widgets: [],
   };
 }
 
 function renderWidgetPreview(widget) {
-  const props = { widget, isBuilder: true, lif: null, clock: null, customAcronyms: {}, theme: 'classic' };
+  const props = { widget, isBuilder: true, lif: null, clock: null, startList: null, customAcronyms: {}, theme: 'classic' };
   switch (widget.type) {
     case 'results_table': return <ResultsTableWidget {...props} />;
     case 'clock':         return <ClockWidget {...props} />;
@@ -85,18 +102,26 @@ function renderWidgetPreview(widget) {
     case 'time_of_day':   return <TimeOfDayWidget {...props} />;
     case 'area_mask':     return <AreaMaskWidget {...props} />;
     case 'stopped_clock': return <ClockStoppedWidget {...props} />;
-    default:              return null;
+    case 'start_list':           return <StartListWidget {...props} />;
+    case 'text_overlay':
+    case 'screensaver_overlay':
+    case 'lineview_overlay':     return <OverlayWidget {...props} />;
+    default:                     return null;
   }
 }
 
 // ---- Column editor for results table ----
-const ALL_COLUMNS = ['place', 'bib', 'name', 'affiliation', 'time', 'wind', 'speed'];
+const ALL_COLUMNS = ['place', 'bib', 'name', 'affiliation', 'time', 'wind', 'speed', 'spacer'];
 const COLUMN_LABELS = {
   place: 'Place', bib: 'Bib', name: 'Name',
-  affiliation: 'Club', time: 'Time', wind: 'Wind', speed: 'Speed',
+  affiliation: 'Club', time: 'Time', wind: 'Wind', speed: 'Speed', spacer: 'Space',
 };
 
-function ColumnEditor({ columns, onChange }) {
+// ---- Column editor for start list ----
+const STARTLIST_COLUMN_LABELS = { lane: 'Lane', bib: 'Bib', name: 'Name', affiliation: 'Club', spacer: 'Space' };
+
+function ColumnEditor({ columns, onChange, allCols = ALL_COLUMNS, colLabels = COLUMN_LABELS }) {
+  const { t } = useTranslation();
   const dragItem = useRef(null);
   const dragOver = useRef(null);
   const [dragActive, setDragActive] = useState(false);
@@ -133,15 +158,17 @@ function ColumnEditor({ columns, onChange }) {
     setDragActive(false);
   };
 
-  const removeCol = (col) => onChange(columns.filter(c => c !== col));
+  // Remove by index so duplicate spacers can be individually deleted
+  const removeCol = (idx) => onChange(columns.filter((_, i) => i !== idx));
   const addCol = (col) => onChange([...columns, col]);
-  const available = ALL_COLUMNS.filter(c => !columns.includes(c));
+  // Spacer can always be added (multiple allowed); other columns only if not yet present
+  const available = allCols.filter(c => c === 'spacer' || !columns.includes(c));
 
   return (
     <div>
       {columns.map((col, idx) => (
         <div
-          key={col}
+          key={`${col}-${idx}`}
           draggable
           onDragStart={e => handleDragStart(e, idx)}
           onDragOver={e => handleDragOver(e, idx)}
@@ -151,14 +178,14 @@ function ColumnEditor({ columns, onChange }) {
             display: 'flex', alignItems: 'center', gap: '6px',
             backgroundColor: dragActive && dragOver.current === idx ? '#1e3a5f' : '#0a1e38',
             borderRadius: '4px', padding: '4px 6px', marginBottom: '3px',
-            cursor: 'grab', fontSize: '0.78em', color: '#a0b4c8',
+            cursor: 'grab', fontSize: '0.78em', color: col === 'spacer' ? '#607d8b' : '#a0b4c8',
             border: '1px solid transparent',
           }}
         >
           <span style={{ color: '#607d8b', fontSize: '1em', userSelect: 'none' }}>⋮⋮</span>
-          <span style={{ flex: 1 }}>{COLUMN_LABELS[col] || col}</span>
+          <span style={{ flex: 1 }}>{t('columns.' + col) || colLabels[col] || col}</span>
           <button
-            onClick={() => removeCol(col)}
+            onClick={() => removeCol(idx)}
             style={{ background: 'none', border: 'none', color: '#b71c1c', cursor: 'pointer', fontSize: '1em', lineHeight: 1, padding: '0 2px' }}
           >×</button>
         </div>
@@ -174,7 +201,7 @@ function ColumnEditor({ columns, onChange }) {
                 border: '1px dashed #1e3a5f', borderRadius: '4px',
                 color: '#607d8b', fontSize: '0.72em', cursor: 'pointer',
               }}
-            >+ {COLUMN_LABELS[col] || col}</button>
+            >+ {t('columns.' + col) || colLabels[col] || col}</button>
           ))}
         </div>
       )}
@@ -184,11 +211,13 @@ function ColumnEditor({ columns, onChange }) {
 
 // ---- Properties Panel ----
 function PropertiesPanel({ widget, onUpdate, onDelete }) {
+  const { t } = useTranslation();
+
   if (!widget) {
     return (
       <div style={panelStyle}>
         <div style={{ color: '#607d8b', fontSize: '0.8em', textAlign: 'center', marginTop: '40px' }}>
-          Click a widget to edit its properties
+          {t('layout.clickToEdit')}
         </div>
       </div>
     );
@@ -203,12 +232,12 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
   return (
     <div style={panelStyle}>
       <div style={{ fontWeight: 'bold', color: '#a0b4c8', marginBottom: '12px', fontSize: '0.85em', letterSpacing: '0.05em' }}>
-        {WIDGET_TYPES[widget.type]?.label || widget.type}
+        {t('widgetTypes.' + widget.type) || WIDGET_TYPES[widget.type]?.label || widget.type}
       </div>
 
       {/* Position & size */}
       <div style={{ marginBottom: '14px' }}>
-        <div style={sectionLabel}>Position &amp; Size</div>
+        <div style={sectionLabel}>{t('layout.positionSize')}</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
           {['x', 'y', 'w', 'h'].map(k => (
             <label key={k} style={fieldLabel}>
@@ -222,8 +251,8 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
       {/* Results table config */}
       {widget.type === 'results_table' && (
         <div style={{ marginBottom: '14px' }}>
-          <div style={sectionLabel}>Columns</div>
-          <div style={{ fontSize: '0.68em', color: '#607d8b', marginBottom: '6px' }}>Drag to reorder · click × to remove</div>
+          <div style={sectionLabel}>{t('layout.columnsSection')}</div>
+          <div style={{ fontSize: '0.68em', color: '#607d8b', marginBottom: '6px' }}>{t('layout.columnsHint')}</div>
           <ColumnEditor
             columns={config.columns || ['place', 'name', 'time']}
             onChange={cols => update('columns', cols)}
@@ -231,10 +260,10 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
 
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a0b4c8', fontSize: '0.8em', marginTop: '8px', cursor: 'pointer' }}>
             <input type="checkbox" checked={config.showHeader !== false} onChange={e => update('showHeader', e.target.checked)} />
-            Show event name header
+            {t('layout.showEventHeader')}
           </label>
 
-          <div style={{ ...sectionLabel, marginTop: '10px' }}>Rows</div>
+          <div style={{ ...sectionLabel, marginTop: '10px' }}>{t('layout.rowsSection')}</div>
           <input
             type="number" min="1" max="20"
             value={config.maxRows || 8}
@@ -244,7 +273,7 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
 
           {hasSpeedCol && (
             <>
-              <div style={{ ...sectionLabel, marginTop: '10px' }}>Speed Unit</div>
+              <div style={{ ...sectionLabel, marginTop: '10px' }}>{t('layout.speedUnitSection')}</div>
               {[['kph', 'km/h'], ['mph', 'mph'], ['ms', 'm/s']].map(([u, label]) => (
                 <label key={u} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a0b4c8', fontSize: '0.8em', marginBottom: '4px', cursor: 'pointer' }}>
                   <input type="radio" name="speed-unit" checked={(config.speedUnit || 'kph') === u} onChange={() => update('speedUnit', u)} />
@@ -253,6 +282,44 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
               ))}
             </>
           )}
+        </div>
+      )}
+
+      {/* Start list config */}
+      {widget.type === 'start_list' && (
+        <div style={{ marginBottom: '14px' }}>
+          <div style={sectionLabel}>{t('layout.columnsSection')}</div>
+          <div style={{ fontSize: '0.68em', color: '#607d8b', marginBottom: '6px' }}>{t('layout.columnsHint')}</div>
+          <div style={{ fontSize: '0.65em', color: '#607d8b', marginBottom: '6px' }}>{t('layout.laneAutoHide')}</div>
+          <ColumnEditor
+            columns={config.columns || ['lane', 'name', 'bib', 'affiliation']}
+            onChange={cols => update('columns', cols)}
+            allCols={ALL_STARTLIST_COLUMNS}
+            colLabels={STARTLIST_COLUMN_LABELS}
+          />
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a0b4c8', fontSize: '0.8em', marginTop: '8px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={config.showHeader !== false} onChange={e => update('showHeader', e.target.checked)} />
+            {t('layout.showEventHeader')}
+          </label>
+
+          <div style={{ ...sectionLabel, marginTop: '10px' }}>{t('layout.rowsSection')}</div>
+          <input
+            type="number" min="1" max="30"
+            value={config.maxRows || 8}
+            onChange={e => update('maxRows', Math.max(1, Math.min(30, parseInt(e.target.value, 10) || 8)))}
+            style={{ ...inputStyle, width: '60px' }}
+          />
+        </div>
+      )}
+
+      {/* Line view overlay config */}
+      {widget.type === 'lineview_overlay' && (
+        <div style={{ marginBottom: '14px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a0b4c8', fontSize: '0.8em', cursor: 'pointer' }}>
+            <input type="checkbox" checked={config.showRotation === true} onChange={e => update('showRotation', e.target.checked)} />
+            {t('layout.lineviewRotation')}
+          </label>
         </div>
       )}
 
@@ -675,11 +742,11 @@ export default function LayoutBuilder() {
     dragging.current = { widgetId: widget.id, offsetX: gx - widget.x, offsetY: gy - widget.y };
   };
 
-  const handleResizeMouseDown = (e, widget) => {
+  const handleResizeMouseDown = (e, widget, corner) => {
     if (e.button !== 0) return;
     e.stopPropagation();
     e.preventDefault();
-    resizing.current = { widgetId: widget.id };
+    resizing.current = { widgetId: widget.id, corner };
   };
 
   const handleMouseMove = useCallback((e) => {
@@ -702,16 +769,34 @@ export default function LayoutBuilder() {
     }
 
     if (resizing.current && currentLayout) {
-      const { widgetId } = resizing.current;
+      const { widgetId, corner } = resizing.current;
       const widget = currentLayout.widgets.find(w => w.id === widgetId);
       if (!widget) return;
-      const newW = clamp(gx - widget.x, 1, GRID_COLS - widget.x);
-      const newH = clamp(gy - widget.y, 1, GRID_ROWS - widget.y);
-      if (newW !== widget.w || newH !== widget.h) {
+      let newX = widget.x, newY = widget.y, newW = widget.w, newH = widget.h;
+      const rightEdge = widget.x + widget.w;
+      const bottomEdge = widget.y + widget.h;
+      if (corner === 'se') {
+        newW = clamp(gx - widget.x, 1, GRID_COLS - widget.x);
+        newH = clamp(gy - widget.y, 1, GRID_ROWS - widget.y);
+      } else if (corner === 'sw') {
+        newX = clamp(gx, 0, rightEdge - 1);
+        newW = rightEdge - newX;
+        newH = clamp(gy - widget.y, 1, GRID_ROWS - widget.y);
+      } else if (corner === 'ne') {
+        newW = clamp(gx - widget.x, 1, GRID_COLS - widget.x);
+        newY = clamp(gy, 0, bottomEdge - 1);
+        newH = bottomEdge - newY;
+      } else if (corner === 'nw') {
+        newX = clamp(gx, 0, rightEdge - 1);
+        newW = rightEdge - newX;
+        newY = clamp(gy, 0, bottomEdge - 1);
+        newH = bottomEdge - newY;
+      }
+      if (newX !== widget.x || newY !== widget.y || newW !== widget.w || newH !== widget.h) {
         setLayoutConfig(prev => ({
           ...prev,
           layouts: prev.layouts.map(l => l.id === selectedLayoutId
-            ? { ...l, widgets: l.widgets.map(w => w.id === widgetId ? { ...w, w: newW, h: newH } : w) }
+            ? { ...l, widgets: l.widgets.map(w => w.id === widgetId ? { ...w, x: newX, y: newY, w: newW, h: newH } : w) }
             : l),
         }));
       }
@@ -935,14 +1020,14 @@ export default function LayoutBuilder() {
         {/* Widget palette — hidden in preview mode */}
         {!previewMode && (
           <div style={{ width: '150px', minWidth: '150px', backgroundColor: '#0d1b2a', borderRight: '1px solid #1e3a5f', padding: '10px', overflowY: 'auto', flexShrink: 0 }}>
-            <div style={{ fontSize: '0.7em', color: '#607d8b', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>Add Widget</div>
+            <div style={{ fontSize: '0.7em', color: '#607d8b', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>{t('layout.addWidget')}</div>
             {Object.entries(WIDGET_TYPES).map(([type, def]) => (
               <button
                 key={type}
                 onClick={() => addWidget(type)}
                 style={{ display: 'block', width: '100%', marginBottom: '6px', padding: '7px 10px', backgroundColor: '#1a2a3a', border: '1px solid #1e3a5f', borderRadius: '5px', color: '#a0b4c8', cursor: 'pointer', fontSize: '0.78em', textAlign: 'left' }}
               >
-                + {def.label}
+                + {t('widgetTypes.' + type) || def.label}
               </button>
             ))}
           </div>
@@ -965,6 +1050,7 @@ export default function LayoutBuilder() {
                   layout={currentLayout}
                   lif={MOCK_LIF}
                   clock={mockClock}
+                  startList={MOCK_STARTLIST}
                   customAcronyms={{}}
                 />
               ) : (
@@ -1005,18 +1091,31 @@ export default function LayoutBuilder() {
 
                     {/* Widget label */}
                     <div style={{ position: 'absolute', top: 2, left: 4, fontSize: '9px', color: '#607d8b', pointerEvents: 'none', userSelect: 'none', letterSpacing: '0.05em' }}>
-                      {WIDGET_TYPES[widget.type]?.label}
+                      {t('widgetTypes.' + widget.type) || WIDGET_TYPES[widget.type]?.label}
                     </div>
 
-                    {/* Resize handle */}
-                    <div
-                      style={{ position: 'absolute', bottom: 0, right: 0, width: '14px', height: '14px', cursor: 'nwse-resize', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      onMouseDown={e => handleResizeMouseDown(e, widget)}
-                    >
-                      <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                        <path d="M1 7L7 1M4 7L7 4M7 7L7 7" stroke="#607d8b" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    </div>
+                    {/* Resize handles — all four corners */}
+                    {[
+                      { corner: 'nw', style: { top: 0, left: 0, cursor: 'nw-resize' } },
+                      { corner: 'ne', style: { top: 0, right: 0, cursor: 'ne-resize' } },
+                      { corner: 'sw', style: { bottom: 0, left: 0, cursor: 'sw-resize' } },
+                      { corner: 'se', style: { bottom: 0, right: 0, cursor: 'se-resize' } },
+                    ].map(({ corner, style }) => (
+                      <div
+                        key={corner}
+                        style={{ position: 'absolute', width: '12px', height: '12px', zIndex: 10, ...style }}
+                        onMouseDown={e => handleResizeMouseDown(e, widget, corner)}
+                      >
+                        <div style={{
+                          position: 'absolute', width: '7px', height: '7px',
+                          backgroundColor: isSelected ? '#1e88e5' : '#607d8b',
+                          border: '1px solid rgba(0,0,0,0.5)',
+                          borderRadius: '1px',
+                          ...(corner.includes('n') ? { top: 0 } : { bottom: 0 }),
+                          ...(corner.includes('w') ? { left: 0 } : { right: 0 }),
+                        }} />
+                      </div>
+                    ))}
                   </div>
                 );
               })}

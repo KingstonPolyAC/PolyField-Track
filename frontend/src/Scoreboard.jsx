@@ -13,16 +13,21 @@ const BASE_URL = (() => {
 export default function Scoreboard() {
   const [layout, setLayout] = useState(null);
   const [currentLIF, setCurrentLIF] = useState(null);
+  const [startList, setStartList] = useState(null);
   const [customAcronyms, setCustomAcronyms] = useState({});
+  const [displayMode, setDisplayMode] = useState('lif');
+  const [activeText, setActiveText] = useState('');
+  const [imageBase64, setImageBase64] = useState('');
   const runningClock = useRunningClock(BASE_URL);
 
   // Poll display state + layout config every 3s to pick up layout changes
   useEffect(() => {
     async function fetchLayout() {
       try {
-        const [stateRes, configRes] = await Promise.all([
+        const [stateRes, configRes, slRes] = await Promise.all([
           fetch(`${BASE_URL}/display-state`),
           fetch(`${BASE_URL}/layout-config`),
+          fetch(`${BASE_URL}/startlist`),
         ]);
         if (!stateRes.ok || !configRes.ok) return;
         const state = await stateRes.json();
@@ -32,6 +37,10 @@ export default function Scoreboard() {
         const found = config.layouts.find(l => l.id === layoutId);
         if (found) setLayout(found);
         if (state.currentLIF) setCurrentLIF(state.currentLIF);
+        if (slRes.ok) setStartList(await slRes.json());
+        setDisplayMode(state.mode || 'lif');
+        setActiveText(state.activeText || '');
+        setImageBase64(state.imageBase64 || '');
       } catch (err) {
         // silently fail — server may be starting up
       }
@@ -68,7 +77,11 @@ export default function Scoreboard() {
         layout={layout}
         lif={currentLIF}
         clock={runningClock}
+        startList={startList}
         customAcronyms={customAcronyms}
+        displayMode={displayMode}
+        activeText={activeText}
+        imageBase64={imageBase64}
         containerStyle={{ width: '100%', height: '100%' }}
       />
     </div>

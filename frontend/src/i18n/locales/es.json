@@ -101,6 +101,34 @@
     "tapToEnlarge": "Toque para ampliar",
     "backToResults": "Volver a los resultados"
   },
+  "widgetTypes": {
+    "results_table": "Tabla de resultados",
+    "clock": "Reloj en marcha",
+    "event_name": "Nombre de prueba (actual)",
+    "event_name_result": "Nombre de prueba (resultado)",
+    "wind": "Viento (resultado)",
+    "wind_current": "Viento (actual)",
+    "custom_text": "Texto personalizado",
+    "custom_logo": "Logo / Imagen",
+    "time_of_day": "Hora del día",
+    "area_mask": "Área de superposición",
+    "stopped_clock": "Tiempo detenido",
+    "start_list": "Lista de salida",
+    "text_overlay": "Texto superpuesto",
+    "screensaver_overlay": "Salvapantallas",
+    "lineview_overlay": "Vista de línea"
+  },
+  "columns": {
+    "place": "Posición",
+    "bib": "Dorsal",
+    "name": "Nombre",
+    "affiliation": "Club",
+    "time": "Tiempo",
+    "wind": "Viento",
+    "speed": "Velocidad",
+    "lane": "Calle",
+    "spacer": "Espacio"
+  },
   "layout": {
     "builder": "Constructor de diseño",
     "newLayout": "Nuevo diseño",
@@ -113,7 +141,16 @@
     "saving": "Guardando…",
     "unsaved": "Cambios sin guardar",
     "export": "Exportar",
-    "import": "Importar"
+    "import": "Importar",
+    "clickToEdit": "Haga clic en un widget para editar sus propiedades",
+    "positionSize": "Posición y tamaño",
+    "columnsSection": "Columnas",
+    "columnsHint": "Arrastrar para reordenar · clic × para eliminar",
+    "laneAutoHide": "La columna de calle se oculta si no hay calles definidas en FinishLynx",
+    "showEventHeader": "Mostrar encabezado de nombre de prueba",
+    "rowsSection": "Filas",
+    "speedUnitSection": "Unidad de velocidad",
+    "lineviewRotation": "Seguir rotación del escritorio"
   },
   "clock": {
     "unofficialTime": "TIEMPO NO OFICIAL",

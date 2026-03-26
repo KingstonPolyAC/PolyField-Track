@@ -71,6 +71,23 @@ type RunningClock struct {
 	ReceivedAt int64  `json:"receivedAt"` // Unix ms when UDP packet was received
 }
 
+// StartListEntry holds one athlete in the start list.
+type StartListEntry struct {
+	Lane        string `json:"lane"`
+	ID          string `json:"id"`
+	FirstName   string `json:"firstName"`
+	LastName    string `json:"lastName"`
+	Affiliation string `json:"affiliation"`
+}
+
+// StartListData holds the current event start list received from FinishLynx via UDP.
+type StartListData struct {
+	EventName  string           `json:"eventName"`
+	Entries    []StartListEntry `json:"entries"`
+	HasLanes   bool             `json:"hasLanes"`
+	ReceivedAt int64            `json:"receivedAt"`
+}
+
 // DisplayState holds the current display mode and settings
 type DisplayState struct {
 	Mode           string   `json:"mode"`           // 'lif', 'text', 'screensaver', 'lineview', 'clock', or 'custom'
@@ -161,6 +178,7 @@ type App struct {
 	displayState       *DisplayState
 	customClubAcronyms map[string]string // lowercased full name -> acronym
 	runningClock       RunningClock
+	startList          StartListData
 }
 
 // NewApp creates a new App instance.
@@ -172,7 +190,7 @@ func NewApp() *App {
 			ActiveText:   "",
 			ImageBase64:  "",
 			RotationMode: "scroll",
-			LayoutTheme:  "classic",
+			LayoutTheme:  "modernDark",
 			ShowBib:      true,
 			Language:     cfg.Language,
 		},
@@ -258,7 +276,7 @@ func (a *App) SetShowBib(show bool) {
 			ActiveText:   "",
 			ImageBase64:  "",
 			RotationMode: "scroll",
-			LayoutTheme:  "classic",
+			LayoutTheme:  "modernDark",
 			ShowBib:      show,
 		}
 	} else {
@@ -272,7 +290,7 @@ func (a *App) GetDisplayState() *DisplayState {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.displayState == nil {
-		return &DisplayState{Mode: "lif", ActiveText: "", ImageBase64: "", RotationMode: "scroll", LayoutTheme: "classic", ShowBib: true, Language: "en"}
+		return &DisplayState{Mode: "lif", ActiveText: "", ImageBase64: "", RotationMode: "scroll", LayoutTheme: "modernDark", ShowBib: true, Language: "en"}
 	}
 	return a.displayState
 }
@@ -1218,6 +1236,38 @@ func startUDPClockListener(app *App) {
 		if packet == "" {
 			continue
 		}
+		// Start list packet — handle separately and continue
+		if strings.HasPrefix(packet, "startlist|") {
+			slParts := strings.Split(packet, "|")
+			if len(slParts) >= 7 {
+				slEventName := strings.TrimSpace(slParts[1])
+				lane := strings.TrimSpace(slParts[2])
+				entry := StartListEntry{
+					Lane:        lane,
+					ID:          strings.TrimSpace(slParts[3]),
+					FirstName:   strings.TrimSpace(slParts[4]),
+					LastName:    strings.TrimSpace(slParts[5]),
+					Affiliation: strings.TrimSpace(slParts[6]),
+				}
+				app.mu.Lock()
+				if app.startList.EventName != slEventName {
+					app.startList = StartListData{
+						EventName:  slEventName,
+						Entries:    []StartListEntry{entry},
+						HasLanes:   lane != "",
+						ReceivedAt: time.Now().UnixMilli(),
+					}
+				} else {
+					app.startList.Entries = append(app.startList.Entries, entry)
+					if lane != "" {
+						app.startList.HasLanes = true
+					}
+					app.startList.ReceivedAt = time.Now().UnixMilli()
+				}
+				app.mu.Unlock()
+			}
+			continue
+		}
 		parts := strings.SplitN(packet, "|", 2)
 		if len(parts) != 2 {
 			continue
@@ -1418,6 +1468,16 @@ func StartFiberServer(app *App) {
 			"receivedAt": clock.ReceivedAt,
 			"serverNow":  time.Now().UnixMilli(),
 		})
+	})
+	// API endpoint to get the current start list.
+	fiberApp.Get("/startlist", func(c *fiber.Ctx) error {
+		app.mu.Lock()
+		sl := app.startList
+		app.mu.Unlock()
+		if sl.Entries == nil {
+			sl.Entries = []StartListEntry{}
+		}
+		return c.JSON(sl)
 	})
 	// API endpoint to get custom club acronyms.
 	fiberApp.Get("/club-acronyms", func(c *fiber.Ctx) error {

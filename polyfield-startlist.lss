@@ -1,0 +1,22 @@
+; PolyField Start List Script
+; Sends athlete start list entries to PolyField via UDP when an event is loaded in FinishLynx.
+;
+; FinishLynx Scoreboard Configuration:
+;   Script:        polyfield-startlist.lss
+;   Port:          Network (UDP)
+;   IP Address:    <PolyField machine IP>  (use 255.255.255.255 to broadcast on LAN)
+;   Port Number:   5002
+;   Running Time:  Off
+;   Results:       Off
+;
+; Packet format:  startlist|<eventName>|<lane>|<bib>|<firstName>|<lastName>|<affiliation>
+;   One packet is sent per athlete when the start list is loaded.
+;   Lane will be empty if no lane assignments are set.
+;
+; Notes:
+;   - Requires the NCP (Network COM Port) plugin (bundled free since FinishLynx 13.00)
+;   - Uses port 5002 (separate from the running clock on port 5001)
+;   - PolyField firewall must allow inbound UDP on port 5002
+
+;;StartList
+\11\01startlist|%e|%l|%i|%f|%s|%a

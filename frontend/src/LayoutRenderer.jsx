@@ -10,6 +10,8 @@ import CustomLogoWidget from './widgets/CustomLogoWidget';
 import TimeOfDayWidget from './widgets/TimeOfDayWidget';
 import AreaMaskWidget from './widgets/AreaMaskWidget';
 import ClockStoppedWidget from './widgets/ClockStoppedWidget';
+import StartListWidget from './widgets/StartListWidget';
+import OverlayWidget from './widgets/OverlayWidget';
 
 function renderWidget(widget, liveProps, isBuilder) {
   const shared = { key: widget.id, widget, isBuilder, ...liveProps };
@@ -25,6 +27,10 @@ function renderWidget(widget, liveProps, isBuilder) {
     case 'time_of_day':    return <TimeOfDayWidget {...shared} />;
     case 'area_mask':      return <AreaMaskWidget {...shared} />;
     case 'stopped_clock':  return <ClockStoppedWidget {...shared} />;
+    case 'start_list':     return <StartListWidget {...shared} />;
+    case 'text_overlay':
+    case 'screensaver_overlay':
+    case 'lineview_overlay': return <OverlayWidget {...shared} />;
     default:               return null;
   }
 }
@@ -56,7 +62,11 @@ export default function LayoutRenderer({
   layout,
   lif,
   clock,
+  startList,
   customAcronyms,
+  displayMode = 'lif',
+  activeText = '',
+  imageBase64 = '',
   overlayContent,
   containerStyle = {},
 }) {
@@ -65,8 +75,12 @@ export default function LayoutRenderer({
   const liveProps = {
     lif,
     clock,
+    startList,
     customAcronyms,
-    theme: layout.theme || 'classic',
+    displayMode,
+    activeText,
+    imageBase64,
+    theme: layout.theme || 'modernDark',
   };
 
   const maskBounds = getMaskBounds(layout);

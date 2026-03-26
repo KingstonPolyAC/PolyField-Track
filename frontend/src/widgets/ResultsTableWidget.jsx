@@ -80,6 +80,7 @@ export default function ResultsTableWidget({ widget, lif, theme, customAcronyms,
   const gridCols = columns.map(col => {
     if (col === 'name') return 'minmax(0, 1fr)';
     if (col === 'affiliation') return 'minmax(0, max-content)';
+    if (col === 'spacer') return '0.6em';
     return 'max-content';
   }).join(' ');
 
@@ -115,6 +116,7 @@ export default function ResultsTableWidget({ widget, lif, theme, customAcronyms,
       case 'affiliation': return shortenClub(comp.affiliation, acronyms) || '';
       case 'time': return comp.time || '';
       case 'wind': return comp.wind || '';
+      case 'spacer': return '';
       case 'speed': {
         const timeSec = parseTime(comp.time);
         if (distanceM <= 0 || timeSec <= 0) return '';

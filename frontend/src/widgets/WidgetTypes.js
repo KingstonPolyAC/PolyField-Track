@@ -101,14 +101,6 @@ export const WIDGET_TYPES = {
       backgroundColor: '',
     },
   },
-  area_mask: {
-    label: 'Overlay Area',
-    defaultW: 20,
-    defaultH: 4,
-    defaultConfig: {
-      backgroundColor: '',
-    },
-  },
   stopped_clock: {
     label: 'Stopped Time',
     defaultW: 10,
@@ -117,6 +109,36 @@ export const WIDGET_TYPES = {
       displaySeconds: 0,
       color: '#e0e0e0',
       backgroundColor: '#000000',
+    },
+  },
+  start_list: {
+    label: 'Start List',
+    defaultW: 14,
+    defaultH: 18,
+    defaultConfig: {
+      columns: ['lane', 'name', 'bib', 'affiliation'],
+      showHeader: true,
+      maxRows: 8,
+    },
+  },
+  text_overlay: {
+    label: 'Text Overlay',
+    defaultW: 20,
+    defaultH: 6,
+    defaultConfig: {},
+  },
+  screensaver_overlay: {
+    label: 'Screensaver',
+    defaultW: 20,
+    defaultH: 20,
+    defaultConfig: {},
+  },
+  lineview_overlay: {
+    label: 'Line View',
+    defaultW: 20,
+    defaultH: 14,
+    defaultConfig: {
+      showRotation: false,
     },
   },
 };

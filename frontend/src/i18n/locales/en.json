@@ -101,6 +101,34 @@
     "tapToEnlarge": "Tap to enlarge",
     "backToResults": "Back to results"
   },
+  "widgetTypes": {
+    "results_table": "Results Table",
+    "clock": "Running Clock",
+    "event_name": "Event Name (Current)",
+    "event_name_result": "Event Name (Result)",
+    "wind": "Wind (Result)",
+    "wind_current": "Wind (Current)",
+    "custom_text": "Custom Text",
+    "custom_logo": "Logo / Image",
+    "time_of_day": "Time of Day",
+    "area_mask": "Overlay Area",
+    "stopped_clock": "Stopped Time",
+    "start_list": "Start List",
+    "text_overlay": "Text Overlay",
+    "screensaver_overlay": "Screensaver",
+    "lineview_overlay": "Line View"
+  },
+  "columns": {
+    "place": "Place",
+    "bib": "Bib",
+    "name": "Name",
+    "affiliation": "Club",
+    "time": "Time",
+    "wind": "Wind",
+    "speed": "Speed",
+    "lane": "Lane",
+    "spacer": "Space"
+  },
   "layout": {
     "builder": "Layout Builder",
     "newLayout": "New Layout",
@@ -113,7 +141,16 @@
     "saving": "Saving…",
     "unsaved": "Unsaved changes",
     "export": "Export",
-    "import": "Import"
+    "import": "Import",
+    "clickToEdit": "Click a widget to edit its properties",
+    "positionSize": "Position & Size",
+    "columnsSection": "Columns",
+    "columnsHint": "Drag to reorder · click × to remove",
+    "laneAutoHide": "Lane column auto-hides if no lanes are set in FinishLynx",
+    "showEventHeader": "Show event name header",
+    "rowsSection": "Rows",
+    "speedUnitSection": "Speed Unit",
+    "lineviewRotation": "Follow desktop rotation"
   },
   "clock": {
     "unofficialTime": "UNOFFICIAL TIME",

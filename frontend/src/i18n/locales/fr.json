@@ -101,6 +101,34 @@
     "tapToEnlarge": "Appuyer pour agrandir",
     "backToResults": "Retour aux résultats"
   },
+  "widgetTypes": {
+    "results_table": "Tableau de résultats",
+    "clock": "Horloge en cours",
+    "event_name": "Nom d'épreuve (actuel)",
+    "event_name_result": "Nom d'épreuve (résultat)",
+    "wind": "Vent (résultat)",
+    "wind_current": "Vent (actuel)",
+    "custom_text": "Texte personnalisé",
+    "custom_logo": "Logo / Image",
+    "time_of_day": "Heure du jour",
+    "area_mask": "Zone de superposition",
+    "stopped_clock": "Temps arrêté",
+    "start_list": "Liste de départ",
+    "text_overlay": "Texte superposé",
+    "screensaver_overlay": "Économiseur d'écran",
+    "lineview_overlay": "Vue ligne"
+  },
+  "columns": {
+    "place": "Place",
+    "bib": "Dossard",
+    "name": "Nom",
+    "affiliation": "Club",
+    "time": "Temps",
+    "wind": "Vent",
+    "speed": "Vitesse",
+    "lane": "Couloir",
+    "spacer": "Espace"
+  },
   "layout": {
     "builder": "Constructeur de mise en page",
     "newLayout": "Nouvelle mise en page",
@@ -113,7 +141,16 @@
     "saving": "Enregistrement…",
     "unsaved": "Modifications non enregistrées",
     "export": "Exporter",
-    "import": "Importer"
+    "import": "Importer",
+    "clickToEdit": "Cliquez sur un widget pour modifier ses propriétés",
+    "positionSize": "Position et taille",
+    "columnsSection": "Colonnes",
+    "columnsHint": "Glisser pour réordonner · cliquer × pour supprimer",
+    "laneAutoHide": "La colonne couloir se masque si aucune couloir n'est défini dans FinishLynx",
+    "showEventHeader": "Afficher l'en-tête du nom d'épreuve",
+    "rowsSection": "Lignes",
+    "speedUnitSection": "Unité de vitesse",
+    "lineviewRotation": "Suivre la rotation du bureau"
   },
   "clock": {
     "unofficialTime": "TEMPS NON OFFICIEL",

@@ -28,7 +28,7 @@ function Results() {
   const [viewMode, setViewMode] = useState('multi'); // 'multi' or 'fullscreen'
   const [currentLIF, setCurrentLIF] = useState(null); // Current single event from desktop
   const [rotationMode, setRotationMode] = useState('scroll'); // Synced from desktop
-  const [layoutTheme, setLayoutTheme] = useState('classic'); // Synced from desktop
+  const [layoutTheme, setLayoutTheme] = useState('modernDark'); // Synced from desktop
 
   // Display mode synced from desktop (for text/screensaver overlays)
   const [syncedDisplayMode, setSyncedDisplayMode] = useState('lif'); // 'lif', 'text', 'screensaver', or 'lineview'

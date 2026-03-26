@@ -130,7 +130,7 @@ function App() {
   const [appFullScreen, setAppFullScreen] = useState(false);
   const [rotationIndex, setRotationIndex] = useState(0);
   const [rotationMode, setRotationMode] = useState('scroll'); // 'scroll', 'page', or 'scrollAll'
-  const [layoutTheme, setLayoutTheme] = useState('classic');
+  const [layoutTheme, setLayoutTheme] = useState('modernDark');
   
   // === ALL-LIF DATA & SOCIAL GRAPHIC STATE ===
   const [allLifData, setAllLifData] = useState([]);
@@ -332,28 +332,14 @@ function App() {
     addDebugLog('Text cleared - showing LIF');
   };
 
-  const showScreensaver = async () => {
+  const showScreensaver = () => {
     if (!linkedImage) {
-      alert('Please link a PNG image first.');
+      alert('Please link an image first.');
       return;
     }
-    // Convert image to base64
-    try {
-      const response = await fetch(linkedImage);
-      const blob = await response.blob();
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result;
-        setDisplayMode('screensaver');
-        syncDisplayState('screensaver', '', base64);
-        addDebugLog('Screensaver activated');
-      };
-      reader.readAsDataURL(blob);
-    } catch (error) {
-      console.error('Error converting image:', error);
-      setDisplayMode('screensaver');
-      addDebugLog('Screensaver activated (without sync)');
-    }
+    setDisplayMode('screensaver');
+    syncDisplayState('screensaver', '', linkedImage);
+    addDebugLog('Screensaver activated');
   };
 
   const restoreLastLIF = () => {
@@ -1015,14 +1001,20 @@ function App() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
+    input.style.display = 'none';
     input.onchange = (e) => {
       const file = e.target.files[0];
+      document.body.removeChild(input);
       if (file) {
-        const imgUrl = URL.createObjectURL(file);
-        setLinkedImage(imgUrl);
-        addDebugLog('Image linked successfully');
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setLinkedImage(ev.target.result);
+          addDebugLog('Image linked successfully');
+        };
+        reader.readAsDataURL(file);
       }
     };
+    document.body.appendChild(input);
     input.click();
   };
 
