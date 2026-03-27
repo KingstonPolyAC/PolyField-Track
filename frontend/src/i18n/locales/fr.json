@@ -3,7 +3,7 @@
     "back": "Retour",
     "close": "Fermer",
     "reset": "Réinitialiser",
-    "version": "Version 3.5.0 - Gordon Lester - support@polyfield.co.uk",
+    "version": "Version 4.0.1 - Gordon Lester - support@polyfield.co.uk",
     "escToExit": "Appuyez sur Échap pour quitter",
     "polyfield": "PolyField - Track",
     "polyfieldAnalytics": "PolyField Analytique",
@@ -148,6 +148,7 @@
     "columnsHint": "Glisser pour réordonner · cliquer × pour supprimer",
     "laneAutoHide": "La colonne couloir se masque si aucune couloir n'est défini dans FinishLynx",
     "showEventHeader": "Afficher l'en-tête du nom d'épreuve",
+    "lanePrefixLabel": "Préfixer les couloirs avec \"Couloir\" (ex. Couloir 1)",
     "rowsSection": "Lignes",
     "speedUnitSection": "Unité de vitesse",
     "lineviewRotation": "Suivre la rotation du bureau"

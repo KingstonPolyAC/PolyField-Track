@@ -88,8 +88,10 @@ function defaultLayout(name) {
   };
 }
 
+const MOCK_BUILDER_CLOCK = { state: 'stopped', time: '19.70', eventName: '200m Men Final', wind: '+0.4' };
+
 function renderWidgetPreview(widget) {
-  const props = { widget, isBuilder: true, lif: null, clock: null, startList: null, customAcronyms: {}, theme: 'classic' };
+  const props = { widget, isBuilder: true, lif: MOCK_LIF, clock: MOCK_BUILDER_CLOCK, startList: MOCK_STARTLIST, customAcronyms: {}, theme: 'classic' };
   switch (widget.type) {
     case 'results_table': return <ResultsTableWidget {...props} />;
     case 'clock':         return <ClockWidget {...props} />;
@@ -303,6 +305,11 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
             {t('layout.showEventHeader')}
           </label>
 
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a0b4c8', fontSize: '0.8em', marginTop: '6px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={config.lanePrefix === true} onChange={e => update('lanePrefix', e.target.checked)} />
+            {t('layout.lanePrefixLabel')}
+          </label>
+
           <div style={{ ...sectionLabel, marginTop: '10px' }}>{t('layout.rowsSection')}</div>
           <input
             type="number" min="1" max="30"
@@ -345,13 +352,39 @@ function PropertiesPanel({ widget, onUpdate, onDelete }) {
       )}
 
       {/* Event name / wind / time of day align */}
-      {(widget.type === 'event_name' || widget.type === 'wind' || widget.type === 'wind_current' || widget.type === 'time_of_day') && (
+      {(widget.type === 'event_name' || widget.type === 'event_name_result' || widget.type === 'wind' || widget.type === 'wind_current' || widget.type === 'time_of_day') && (
         <div style={{ marginBottom: '14px' }}>
           <div style={sectionLabel}>Align</div>
           <div style={{ display: 'flex', gap: '4px' }}>
             {['left', 'center', 'right'].map(a => (
               <button key={a} onClick={() => update('align', a)} style={{ ...smallBtn, backgroundColor: config.align === a ? '#1565c0' : '#1a2a3a' }}>{a}</button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Text size and line wrapping — event name and custom text widgets */}
+      {['event_name', 'event_name_result', 'custom_text'].includes(widget.type) && (
+        <div style={{ marginBottom: '14px' }}>
+          <div style={sectionLabel}>Text Size</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <input
+              type="number" min="10" max="200"
+              value={config.fontSizePercent ?? 65}
+              onChange={e => update('fontSizePercent', Math.max(10, Math.min(200, parseInt(e.target.value, 10) || 65)))}
+              style={{ ...inputStyle, width: '60px' }}
+            />
+            <span style={{ fontSize: '0.75em', color: '#607d8b' }}>% of widget height</span>
+          </div>
+          <div style={{ ...sectionLabel, marginTop: '10px' }}>Wrap Lines</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <input
+              type="number" min="1" max="10"
+              value={config.maxLines ?? 1}
+              onChange={e => update('maxLines', Math.max(1, Math.min(10, parseInt(e.target.value, 10) || 1)))}
+              style={{ ...inputStyle, width: '60px' }}
+            />
+            <span style={{ fontSize: '0.75em', color: '#607d8b' }}>max lines (1 = no wrap)</span>
           </div>
         </div>
       )}
@@ -590,7 +623,7 @@ export default function LayoutBuilder() {
 
   // Preview mode
   const [previewMode, setPreviewMode] = useState(false);
-  const [mockClock, setMockClock] = useState({ state: 'idle', time: '' });
+  const [mockClock, setMockClock] = useState({ state: 'idle', time: '', eventName: '', wind: '' });
   const previewTimers = useRef([]);
 
   const canvasRef = useRef(null);
@@ -640,23 +673,25 @@ export default function LayoutBuilder() {
     previewTimers.current.forEach(id => clearTimeout(id));
     previewTimers.current = [];
 
+    const EVENT = MOCK_LIF.eventName;
+
     setPreviewMode(true);
-    setMockClock({ state: 'idle', time: '' });
+    setMockClock({ state: 'timeofday', time: new Date().toLocaleTimeString('en-GB'), eventName: '', wind: '' });
 
     const t1 = setTimeout(() => {
-      setMockClock({ state: 'armed', time: 'READY' });
+      setMockClock({ state: 'armed', time: '', eventName: EVENT, wind: '' });
 
       const t2 = setTimeout(() => {
         const startMs = Date.now();
-        setMockClock({ state: 'running', time: '0:00.00' });
+        setMockClock({ state: 'running', time: '0:00.00', eventName: EVENT, wind: '' });
 
         const tick = () => {
           const elapsed = (Date.now() - startMs) / 1000;
           if (elapsed >= LEAD_TIME) {
-            setMockClock({ state: 'stopped', time: trimClockTime(`0:${LEAD_TIME.toFixed(2).padStart(5, '0')}`), wind: '+0.4' });
+            setMockClock({ state: 'stopped', time: trimClockTime(`0:${LEAD_TIME.toFixed(2).padStart(5, '0')}`), eventName: EVENT, wind: '+0.4' });
             return;
           }
-          setMockClock({ state: 'running', time: formatClockTime(elapsed) });
+          setMockClock({ state: 'running', time: formatClockTime(elapsed), eventName: EVENT, wind: '' });
           const tN = setTimeout(tick, 50);
           previewTimers.current.push(tN);
         };
@@ -672,7 +707,7 @@ export default function LayoutBuilder() {
     previewTimers.current.forEach(id => clearTimeout(id));
     previewTimers.current = [];
     setPreviewMode(false);
-    setMockClock({ state: 'idle', time: '' });
+    setMockClock({ state: 'idle', time: '', eventName: '', wind: '' });
   }, []);
 
   // ---- Debounced save ----

@@ -34,6 +34,8 @@ export const WIDGET_TYPES = {
       align: 'center',
       color: '#ffffff',
       backgroundColor: '',
+      fontSizePercent: 65,
+      maxLines: 1,
     },
   },
   event_name_result: {
@@ -45,6 +47,8 @@ export const WIDGET_TYPES = {
       align: 'center',
       color: '#ffffff',
       backgroundColor: '',
+      fontSizePercent: 65,
+      maxLines: 1,
     },
   },
   wind: {
@@ -78,6 +82,8 @@ export const WIDGET_TYPES = {
       color: '#ffffff',
       align: 'center',
       backgroundColor: '',
+      fontSizePercent: 65,
+      maxLines: 1,
     },
   },
   custom_logo: {
@@ -119,6 +125,7 @@ export const WIDGET_TYPES = {
       columns: ['lane', 'name', 'bib', 'affiliation'],
       showHeader: true,
       maxRows: 8,
+      lanePrefix: false,
     },
   },
   text_overlay: {

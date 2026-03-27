@@ -1,7 +1,9 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { trimClockTime, parseTimeToMs, formatMsToTime } from '../clockUtils';
+import { useTranslation } from '../i18n';
 
 export default function ClockWidget({ widget, clock, isBuilder }) {
+  const { t } = useTranslation();
   const containerRef = useRef(null);
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
   const [displayStr, setDisplayStr] = useState('');
@@ -47,12 +49,15 @@ export default function ClockWidget({ widget, clock, isBuilder }) {
       } else {
         setDisplayStr(trimClockTime(clock?.time) || '');
       }
+    } else if (state === 'paused') {
+      cancelAnim();
+      setDisplayStr(trimClockTime(clock?.time) || '');
     } else if (state === 'armed') {
       cancelAnim();
-      setDisplayStr('READY');
+      setDisplayStr(t('clock.ready'));
     } else if (state === 'timeofday') {
       cancelAnim();
-      setDisplayStr(clock?.time || '');
+      // Initial display set here; kept fresh / blanked by the receivedAt effect below
     } else if (state === 'idle') {
       cancelAnim();
       setDisplayStr('');
@@ -60,7 +65,29 @@ export default function ClockWidget({ widget, clock, isBuilder }) {
     // 'running' is handled by the effect below
 
     return cancelAnim;
-  }, [clock?.state, stopOnFinish, cancelAnim]);
+  }, [clock?.state, stopOnFinish, cancelAnim, t]);
+
+  // Keep TOD display fresh and blank it when FinishLynx stops sending TOD packets.
+  // Fires on every TOD packet (receivedAt changes) and every state transition.
+  useEffect(() => {
+    const s = clock?.state || 'idle';
+    if (s !== 'timeofday') return;
+    const age = Date.now() - (clock?.receivedAt || 0);
+    if (age <= 3000) {
+      setDisplayStr(clock?.time || '');
+    }
+    const id = setInterval(() => {
+      if (Date.now() - (clock?.receivedAt || 0) > 3000) setDisplayStr('');
+    }, 500);
+    return () => clearInterval(id);
+  }, [clock?.state, clock?.receivedAt]);
+
+  // Re-translate the armed/ready string when language changes
+  useEffect(() => {
+    if ((clock?.state || 'idle') === 'armed') {
+      setDisplayStr(t('clock.ready'));
+    }
+  }, [t]);
 
   // Sync running display with the hook's smooth interpolated time
   useEffect(() => {
@@ -83,6 +110,7 @@ export default function ClockWidget({ widget, clock, isBuilder }) {
   const keepGoingActive = state === 'stopped' && !stopOnFinish;
   const color = (isRunning || keepGoingActive) ? (config.colorRunning   || '#1e88e5')
               : state === 'stopped'             ? (config.colorStopped   || '#e0e0e0')
+              : state === 'paused'              ? (config.colorStopped   || '#e0e0e0')
               : state === 'timeofday'           ? (config.colorTimeOfDay || '#e0e0e0')
               :                                   (config.colorReady     || '#607d8b');
 

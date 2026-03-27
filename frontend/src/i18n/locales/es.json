@@ -148,6 +148,7 @@
     "columnsHint": "Arrastrar para reordenar · clic × para eliminar",
     "laneAutoHide": "La columna de calle se oculta si no hay calles definidas en FinishLynx",
     "showEventHeader": "Mostrar encabezado de nombre de prueba",
+    "lanePrefixLabel": "Prefijar calles con \"Calle\" (ej. Calle 1)",
     "rowsSection": "Filas",
     "speedUnitSection": "Unidad de velocidad",
     "lineviewRotation": "Seguir rotación del escritorio"

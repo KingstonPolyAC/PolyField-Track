@@ -3,7 +3,7 @@
     "back": "Back",
     "close": "Close",
     "reset": "Reset",
-    "version": "Version 3.5.0 - Gordon Lester - support@polyfield.co.uk",
+    "version": "Version 4.0.1 - Gordon Lester - support@polyfield.co.uk",
     "escToExit": "Press Esc to exit",
     "polyfield": "PolyField - Track",
     "polyfieldAnalytics": "PolyField Analytics",
@@ -148,6 +148,7 @@
     "columnsHint": "Drag to reorder · click × to remove",
     "laneAutoHide": "Lane column auto-hides if no lanes are set in FinishLynx",
     "showEventHeader": "Show event name header",
+    "lanePrefixLabel": "Prefix lanes with \"Lane\" (e.g. Lane 1)",
     "rowsSection": "Rows",
     "speedUnitSection": "Speed Unit",
     "lineviewRotation": "Follow desktop rotation"

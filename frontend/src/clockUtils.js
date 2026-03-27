@@ -117,6 +117,7 @@ export function useRunningClock(baseUrl) {
             time: data.time || '',
             eventName: data.eventName || '',
             wind: data.wind || '',
+            receivedAt: data.receivedAt || Date.now(),
           });
         }
       } catch (err) {

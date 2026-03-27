@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"embed"
 	"encoding/base64"
@@ -179,6 +180,7 @@ type App struct {
 	customClubAcronyms map[string]string // lowercased full name -> acronym
 	runningClock       RunningClock
 	startList          StartListData
+	evtAthletes        map[string][]StartListEntry // key: "eventRef|round|heat" → athletes from lynx.evt
 }
 
 // NewApp creates a new App instance.
@@ -331,6 +333,7 @@ func (a *App) startup(ctx context.Context) {
 		if info, err := os.Stat(a.monitoredDir); err == nil && info.IsDir() {
 			log.Printf("Auto-restoring monitored directory: %s", a.monitoredDir)
 			a.initClubList()
+			a.loadEvtAthletes()
 			go a.watchDirectory()
 		} else {
 			log.Printf("Saved directory no longer exists: %s", a.monitoredDir)
@@ -384,6 +387,7 @@ func (a *App) ChooseDirectory() (string, error) {
 	log.Println("Directory selected:", dir)
 	a.monitoredDir = dir
 	a.initClubList()
+	a.loadEvtAthletes()
 	go a.watchDirectory()
 
 	// Save directory to config
@@ -540,6 +544,14 @@ func (a *App) watchDirectory() {
 		case event, ok := <-watcher.Events:
 			if !ok {
 				return
+			}
+			// Handle lynx.evt changes — reload start list athlete database
+			if filepath.Base(event.Name) == "lynx.evt" &&
+				(event.Op&fsnotify.Write == fsnotify.Write || event.Op&fsnotify.Create == fsnotify.Create) {
+				log.Println("Detected change in lynx.evt, reloading athlete database...")
+				time.Sleep(200 * time.Millisecond)
+				a.loadEvtAthletes()
+				continue
 			}
 			// Handle club-list.csv changes
 			if filepath.Base(event.Name) == "club-list.csv" &&
@@ -1197,9 +1209,174 @@ func getLANIPs() []net.IP {
 	return ips
 }
 
+// slNull converts FinishLynx "(null)" output to an empty string for start list fields.
+func slNull(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "(null)" || s == "null" {
+		return ""
+	}
+	return s
+}
+
 // todTimeRe extracts the time-of-day portion (H:MM:SS or HH:MM:SS with optional decimals)
 // from the FinishLynx TimeOfDay packet, which can include extra fields like event name and wind.
 var todTimeRe = regexp.MustCompile(`\b\d{1,2}:\d{2}:\d{2}(?:\.\d+)?\b`)
+
+// normalizeEvtName strips the scheduled-time tag and version suffix from a FinishLynx event
+// name so that the same string is produced whether it came from a UDP packet or a lynx.evt row.
+// e.g. "U17 M-200m_f-1  1649h  (version 1)" → "u17 m-200m_f-1"
+func normalizeEvtName(name string) string {
+	// Strip " (version N)" suffix
+	if i := strings.LastIndex(name, " (version "); i >= 0 {
+		name = name[:i]
+	}
+	// Strip scheduled time tag like "  1649h"
+	name = regexp.MustCompile(`\s+\d{3,4}h\s*$`).ReplaceAllString(name, "")
+	return strings.ToLower(strings.TrimSpace(name))
+}
+
+// findEvtAthletes looks up athletes for the given UDP event name in the evtAthletes map.
+// The map is keyed by normalizeEvtName so a direct lookup suffices; a prefix fallback
+// handles cases where the UDP name omits the round/heat suffix.
+func findEvtAthletes(evtAthletes map[string][]StartListEntry, udpEventName string) []StartListEntry {
+	if len(evtAthletes) == 0 {
+		return nil
+	}
+	key := normalizeEvtName(udpEventName)
+	if entries, ok := evtAthletes[key]; ok {
+		log.Printf("EVT match: %q → %d athletes", key, len(entries))
+		return entries
+	}
+	// Fallback: match any evt entry whose key starts with the UDP key (handles truncated names)
+	for k, entries := range evtAthletes {
+		if strings.HasPrefix(k, key) || strings.HasPrefix(key, k) {
+			log.Printf("EVT prefix match: %q ~ %q → %d athletes", key, k, len(entries))
+			return entries
+		}
+	}
+	log.Printf("EVT no match for %q", key)
+	return nil
+}
+
+// parseEvtFile reads a FinishLynx lynx.evt file and returns athletes grouped by
+// normalizeEvtName(eventName).  The file is Windows-1252 encoded, comma-separated.
+//
+// Row types:
+//
+//	Event row  (parts[0] != ""): eventRef, round, heat, eventName, …
+//	Athlete row (parts[0] == ""): blank, id/bib, lane, lastName, firstName, affiliation, …
+func parseEvtFile(path string) (map[string][]StartListEntry, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	decoder := charmap.Windows1252.NewDecoder()
+	reader := transform.NewReader(f, decoder)
+
+	scanner := bufio.NewScanner(reader)
+	result := make(map[string][]StartListEntry)
+	currentKey := ""
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		r := csv.NewReader(strings.NewReader(line))
+		r.FieldsPerRecord = -1
+		r.LazyQuotes = true
+		parts, err := r.Read()
+		if err != nil {
+			continue
+		}
+		for i := range parts {
+			parts[i] = strings.TrimSpace(parts[i])
+		}
+
+		if len(parts) < 4 {
+			continue
+		}
+
+		if parts[0] != "" {
+			// Event row: parts[0]=eventRef, parts[1]=round, parts[2]=heat, parts[3]=eventName
+			currentKey = normalizeEvtName(parts[3])
+		} else {
+			// Athlete row: parts[1]=id/bib, parts[2]=lane, parts[3]=lastName, parts[4]=firstName, parts[5]=affil
+			if currentKey == "" || len(parts) < 5 {
+				continue
+			}
+			id := ""
+			if len(parts) > 1 {
+				id = parts[1]
+			}
+			lane := ""
+			if len(parts) > 2 {
+				lane = parts[2]
+			}
+			last := ""
+			if len(parts) > 3 {
+				last = parts[3]
+			}
+			first := ""
+			if len(parts) > 4 {
+				first = parts[4]
+			}
+			affil := ""
+			if len(parts) > 5 {
+				affil = parts[5]
+			}
+
+			// Skip rows with no useful athlete data
+			if id == "" && last == "" && first == "" {
+				continue
+			}
+
+			// Normalise lane: "0" or non-numeric → no lane
+			laneFmt := ""
+			if n, err := strconv.Atoi(lane); err == nil && n > 0 {
+				laneFmt = strconv.Itoa(n)
+			}
+
+			result[currentKey] = append(result[currentKey], StartListEntry{
+				Lane:        laneFmt,
+				ID:          id,
+				FirstName:   first,
+				LastName:    last,
+				Affiliation: affil,
+			})
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	log.Printf("parseEvtFile: loaded %d event groups from %s", len(result), path)
+	return result, nil
+}
+
+// loadEvtAthletes searches for lynx.evt in the monitored directory, parses it,
+// and stores the result in app.evtAthletes.
+func (app *App) loadEvtAthletes() {
+	if app.monitoredDir == "" {
+		return
+	}
+	evtPath := filepath.Join(app.monitoredDir, "lynx.evt")
+	if _, err := os.Stat(evtPath); os.IsNotExist(err) {
+		log.Printf("lynx.evt not found in %s", app.monitoredDir)
+		return
+	}
+	athletes, err := parseEvtFile(evtPath)
+	if err != nil {
+		log.Printf("parseEvtFile error: %v", err)
+		return
+	}
+	app.mu.Lock()
+	app.evtAthletes = athletes
+	app.mu.Unlock()
+}
 
 // startUDPClockListener listens for FinishLynx running clock packets on UDP port 5001.
 // Each packet is pipe-delimited: "<time>|<eventName>".
@@ -1214,7 +1391,7 @@ func startUDPClockListener(app *App) {
 	}
 	defer conn.Close()
 	log.Printf("UDP clock listener: listening on :5001")
-	buf := make([]byte, 1024)
+	buf := make([]byte, 2048)
 	var stoppedAt time.Time
 	var currentWind string // persists until next armed event
 	for {
@@ -1223,36 +1400,158 @@ func startUDPClockListener(app *App) {
 			log.Printf("UDP clock listener: read error: %v", err)
 			continue
 		}
-		// Strip all non-printable-ASCII bytes. FinishLynx NCP appends binary-encoded
-		// metadata after the pipe separator; keeping only 0x20-0x7E gives us clean text.
 		raw := buf[:n]
-		filtered := raw[:0:len(raw)]
-		for _, b := range raw {
-			if b >= 0x20 && b <= 0x7E {
-				filtered = append(filtered, b)
-			}
-		}
-		packet := strings.TrimSpace(string(filtered))
+		// Decode from Windows-1252 (FinishLynx default encoding) to preserve
+		// extended characters (accented letters, etc.) in athlete names.
+		decoder := charmap.Windows1252.NewDecoder()
+		decodedBytes, _, _ := transform.Bytes(decoder, raw)
+		// Remove known NCP channel-switch byte pairs only, so that characters
+		// in the 0x01-0x1F range within actual data are not accidentally lost.
+		packet := string(decodedBytes)
+		packet = strings.ReplaceAll(packet, "\x09\x01", "") // LSS \11\01 channel-1
+		packet = strings.ReplaceAll(packet, "\x0B\x02", "") // LSS \13\02 channel-2
+		packet = strings.ReplaceAll(packet, "\x11\x01", "") // standard data header
+		packet = strings.ReplaceAll(packet, "\x13\x02", "") // alternate data header
+		packet = strings.TrimSpace(packet)
 		if packet == "" {
 			continue
 		}
-		// Start list packet — handle separately and continue
-		if strings.HasPrefix(packet, "startlist|") {
-			slParts := strings.Split(packet, "|")
-			if len(slParts) >= 7 {
-				slEventName := strings.TrimSpace(slParts[1])
-				lane := strings.TrimSpace(slParts[2])
+		log.Printf("UDP packet: %q", packet)
+		// Start list packets — FinishLynx can deliver these in several formats:
+		//   "startlist-event|EventName[startlist|athlete1...]"  — new LSS with header prefix
+		//   "EventNamestartlist|athlete1..."                    — channel-2 event name prepended
+		//   "startlist|athlete1..."                             — athlete rows only
+		if strings.Contains(packet, "startlist-event|") || strings.Contains(packet, "startlist|") {
+			athletePart := packet
+			evtPopulated := false // true when lynx.evt supplied the athlete list
+			// Extract event name from header if present.
+			if idx := strings.Index(packet, "startlist-event|"); idx >= 0 {
+				after := packet[idx+len("startlist-event|"):]
+				if nextIdx := strings.Index(after, "startlist|"); nextIdx >= 0 {
+					eventName := strings.TrimSpace(after[:nextIdx])
+					if eventName != "" {
+						evtEntries := findEvtAthletes(app.evtAthletes, eventName)
+						app.mu.Lock()
+						app.startList = StartListData{EventName: eventName}
+						app.runningClock.EventName = eventName
+						if len(evtEntries) > 0 {
+							hasLanes := false
+							for _, e := range evtEntries {
+								if e.Lane != "" {
+									hasLanes = true
+									break
+								}
+							}
+							app.startList.Entries = evtEntries
+							app.startList.HasLanes = hasLanes
+							app.startList.ReceivedAt = time.Now().UnixMilli()
+							evtPopulated = true
+						}
+						app.mu.Unlock()
+					}
+					athletePart = after[nextIdx:]
+				} else {
+					// Header only, no athlete rows in this datagram.
+					eventName := strings.TrimSpace(after)
+					if eventName != "" {
+						evtEntries := findEvtAthletes(app.evtAthletes, eventName)
+						app.mu.Lock()
+						app.startList = StartListData{EventName: eventName}
+						app.runningClock.EventName = eventName
+						if len(evtEntries) > 0 {
+							hasLanes := false
+							for _, e := range evtEntries {
+								if e.Lane != "" {
+									hasLanes = true
+									break
+								}
+							}
+							app.startList.Entries = evtEntries
+							app.startList.HasLanes = hasLanes
+							app.startList.ReceivedAt = time.Now().UnixMilli()
+						}
+						app.mu.Unlock()
+					}
+					continue
+				}
+			} else if idx := strings.Index(packet, "startlist|"); idx > 0 {
+				// Event name appears before the first "startlist|" (channel-2 prepend format).
+				possibleName := strings.TrimSpace(packet[:idx])
+				// Reject continuation fragments from split UDP datagrams — they contain
+				// pipe separators (e.g. "QK%E3UM'|last=|club=") and are not event names.
+				if possibleName != "" && !strings.Contains(possibleName, "|") {
+					evtEntries := findEvtAthletes(app.evtAthletes, possibleName)
+					app.mu.Lock()
+					app.startList = StartListData{EventName: possibleName}
+					if len(evtEntries) > 0 {
+						hasLanes := false
+						for _, e := range evtEntries {
+							if e.Lane != "" {
+								hasLanes = true
+								break
+							}
+						}
+						app.startList.Entries = evtEntries
+						app.startList.HasLanes = hasLanes
+						app.startList.ReceivedAt = time.Now().UnixMilli()
+						evtPopulated = true
+					}
+					app.mu.Unlock()
+				}
+				athletePart = packet[idx:]
+			}
+			if !strings.HasPrefix(athletePart, "startlist|") {
+				continue
+			}
+			// If lynx.evt already populated the start list, skip the UDP athlete rows.
+			// The UDP token values are unreliable (wrong field mapping from FinishLynx).
+			if evtPopulated {
+				continue
+			}
+			// Get the event name so we can strip it from the tail of each athlete row.
+			// FinishLynx appends it via the \13\02%s NCP channel-2 line.
+			app.mu.Lock()
+			slEventName := app.startList.EventName
+			app.mu.Unlock()
+			for _, subPkt := range strings.Split(athletePart, "startlist|") {
+				if subPkt == "" {
+					continue
+				}
+				// Strip the appended event name from the tail of this record.
+				if slEventName != "" {
+					if eIdx := strings.LastIndex(subPkt, slEventName); eIdx >= 0 {
+						subPkt = subPkt[:eIdx]
+					}
+				}
+				fields := make(map[string]string)
+				for _, part := range strings.Split(subPkt, "|") {
+					if idx := strings.IndexByte(part, '='); idx > 0 {
+						fields[strings.TrimSpace(part[:idx])] = strings.TrimSpace(part[idx+1:])
+					}
+				}
+				if len(fields) == 0 {
+					continue
+				}
+				// Lane: \L outputs an integer; treat 0 or empty as no lane.
+				lane := ""
+				if rawLane := fields["lane"]; rawLane != "" {
+					if f, err := strconv.ParseFloat(rawLane, 64); err == nil && f > 0 {
+						lane = strconv.Itoa(int(math.Round(f)))
+					} else if rawLane != "0" {
+						lane = rawLane
+					}
+				}
 				entry := StartListEntry{
 					Lane:        lane,
-					ID:          strings.TrimSpace(slParts[3]),
-					FirstName:   strings.TrimSpace(slParts[4]),
-					LastName:    strings.TrimSpace(slParts[5]),
-					Affiliation: strings.TrimSpace(slParts[6]),
+					ID:          slNull(fields["bib"]),
+					FirstName:   slNull(fields["first"]),
+					LastName:    slNull(fields["last"]),
+					Affiliation: slNull(fields["club"]),
 				}
 				app.mu.Lock()
-				if app.startList.EventName != slEventName {
+				if len(app.startList.Entries) == 0 {
 					app.startList = StartListData{
-						EventName:  slEventName,
+						EventName:  app.startList.EventName,
 						Entries:    []StartListEntry{entry},
 						HasLanes:   lane != "",
 						ReceivedAt: time.Now().UnixMilli(),
@@ -1268,6 +1567,20 @@ func startUDPClockListener(app *App) {
 			}
 			continue
 		}
+		// Wind reading packet — handle before the pipe-split so it works
+		// whether FinishLynx appends an event name or not.
+		// Ignore placeholder values FinishLynx emits when no reading is available.
+		if strings.HasPrefix(packet, "wind:") {
+			val := strings.TrimSpace(strings.TrimPrefix(strings.SplitN(packet, "|", 2)[0], "wind:"))
+			if val != "" && val != "no data" && val != " " {
+				currentWind = val
+				app.mu.Lock()
+				app.runningClock.Wind = currentWind
+				app.mu.Unlock()
+			}
+			continue
+		}
+
 		parts := strings.SplitN(packet, "|", 2)
 		if len(parts) != 2 {
 			continue
@@ -1277,18 +1590,13 @@ func startUDPClockListener(app *App) {
 		state := "running"
 		displayTime := rawTime
 
-		// Wind reading packet — update wind and continue without changing clock state
-		if strings.HasPrefix(rawTime, "wind:") {
-			currentWind = strings.TrimSpace(strings.TrimPrefix(rawTime, "wind:"))
-			app.mu.Lock()
-			app.runningClock.Wind = currentWind
-			app.mu.Unlock()
-			continue
-		}
-
 		if strings.HasPrefix(rawTime, "stopped:") {
 			state = "stopped"
 			displayTime = strings.TrimPrefix(rawTime, "stopped:")
+			stoppedAt = time.Now()
+		} else if strings.HasPrefix(rawTime, "paused:") {
+			state = "paused"
+			displayTime = strings.TrimPrefix(rawTime, "paused:")
 			stoppedAt = time.Now()
 		} else {
 			switch rawTime {
@@ -1309,7 +1617,7 @@ func startUDPClockListener(app *App) {
 					}
 					displayTime = m
 				} else {
-					displayTime = eventName
+					displayTime = "" // no valid time found; show nothing rather than garbled text
 				}
 				eventName = ""
 				stoppedAt = time.Time{}
@@ -1326,6 +1634,12 @@ func startUDPClockListener(app *App) {
 			eventName = app.runningClock.EventName // preserve last known event name
 		}
 		app.runningClock = RunningClock{State: state, Time: displayTime, EventName: eventName, Wind: currentWind, ReceivedAt: time.Now().UnixMilli()}
+		// When a new event is armed, update the start list event name.
+		// Entries are NOT cleared here because FinishLynx sends start list packets
+		// before the armed packet in the typical workflow.
+		if state == "armed" && eventName != "" {
+			app.startList.EventName = eventName
+		}
 		app.mu.Unlock()
 	}
 }

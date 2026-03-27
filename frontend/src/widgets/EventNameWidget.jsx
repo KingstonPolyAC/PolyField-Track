@@ -14,11 +14,13 @@ export default function EventNameWidget({ widget, lif, clock, isBuilder }) {
   }, []);
 
   const config = widget.config || {};
-  const source = config.source || 'lif';
+  const source = config.source || (widget.type === 'event_name' ? 'clock' : 'lif');
   const align = config.align || 'center';
   const color = isBuilder ? '#7ab' : (config.color || '#ffffff');
   const bg = config.backgroundColor || undefined;
-  const fontSize = Math.min(containerH * 0.65, 120);
+  const fontSizePercent = config.fontSizePercent ?? 65;
+  const maxLines = config.maxLines ?? 1;
+  const fontSize = Math.min(containerH * (fontSizePercent / 100), 300);
 
   let text;
   if (isBuilder) {
@@ -27,9 +29,14 @@ export default function EventNameWidget({ widget, lif, clock, isBuilder }) {
     text = source === 'clock' ? (clock?.eventName || '') : (lif?.eventName || '');
   }
 
+  const textAlign = align === 'left' ? 'left' : align === 'right' ? 'right' : 'center';
+  const textStyle = maxLines > 1
+    ? { whiteSpace: 'normal', wordBreak: 'break-word', display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: maxLines, overflow: 'hidden', width: '100%', textAlign }
+    : { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' };
+
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center', padding: '0 8px', overflow: 'hidden', boxSizing: 'border-box', backgroundColor: bg }}>
-      <div style={{ fontSize: fontSize + 'px', color, fontWeight: 'bold', letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+      <div style={{ fontSize: fontSize + 'px', color, fontWeight: 'bold', letterSpacing: '0.04em', ...textStyle }}>
         {text}
       </div>
     </div>

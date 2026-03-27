@@ -21,6 +21,7 @@ export default function StartListWidget({ widget, startList, theme, customAcrony
   const config = widget.config || {};
   const maxRows = Math.max(1, Math.min(30, config.maxRows || 8));
   const showHeader = config.showHeader !== false;
+  const lanePrefix = config.lanePrefix === true;
 
   // Determine effective columns — hide 'lane' if no lanes are assigned in the data
   const hasLanes = startList?.hasLanes ?? false;
@@ -71,7 +72,7 @@ export default function StartListWidget({ widget, startList, theme, customAcrony
 
   const getCellContent = (entry, col) => {
     switch (col) {
-      case 'lane': return entry.lane || '';
+      case 'lane': return entry.lane ? (lanePrefix ? `Lane ${entry.lane}` : entry.lane) : '';
       case 'bib': return entry.id || '';
       case 'name': {
         const fn = entry.firstName ? entry.firstName + ' ' : '';
@@ -88,6 +89,7 @@ export default function StartListWidget({ widget, startList, theme, customAcrony
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#7ab', gap: '4px' }}>
         <div style={{ fontSize: '0.85em', fontWeight: 'bold', letterSpacing: '0.05em' }}>START LIST</div>
         <div style={{ fontSize: '0.65em', color: '#556' }}>{configuredCols.join(' · ')}</div>
+        <div style={{ fontSize: '0.6em', color: '#445', marginTop: '2px' }}>source: lynx.evt</div>
       </div>
     );
   }

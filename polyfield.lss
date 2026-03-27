@@ -1,53 +1,38 @@
-; PolyField Script
-; Sends running clock, wind, and start list data to PolyField via UDP
-;
-; FinishLynx Scoreboard Configuration:
-;   Script:        polyfield.lss
-;   Port:          Network (UDP)
-;   IP Address:    <PolyField machine IP>  (use 255.255.255.255 to broadcast on LAN)
-;   Port Number:   5001
-;   Running Time:  Normal
-;   Results:       Off
-;
-; Clock packet format:  <time>|<eventName>
-;   Running:      0:12.3|100m Men Final
-;   Armed:        armed|100m Men Final
-;   Stopped:      stopped:12.34|100m Men Final  (actual stop time included)
-;   Time of day:  timeofday|<time string>
-;   Wind reading: wind:+1.2|100m Men Final  (wind value in m/s, persists until next armed)
-;
-; Start list packet format:  startlist|<eventName>|<lane>|<bib>|<firstName>|<lastName>|<affiliation>
-;   One packet is sent per athlete when the start list is loaded.
-;   Lane will be empty if no lane assignments are set.
-;
-; Notes:
-;   - Requires the NCP (Network COM Port) plugin (bundled free since FinishLynx 13.00)
-;   - Time is formatted to tenths of a second while the clock is running (e.g. 0:12.3)
-;   - PolyField firewall must allow inbound UDP on port 5001
+; --- Clock & Timing State ---
 
 ;;TimeArmed
 \11\01armed|
-\13\02%s
+\13\02%s\r\n
 
 ;;TimeRunning
 \11\01%s|
-\13\02%s
+\13\02%s\r\n
 
 ;;TimeUpdate
 \11\01%s|
-\13\02%s
+\13\02%s\r\n
 
 ;;TimeStopped
 \11\01stopped:%s|
-\13\02%s
+\13\02%s\r\n
+
+;;TimePaused
+\11\01paused:%s|
+\13\02%s\r\n
 
 ;;TimeOfDay
-\11\01timeofday|
-\13\02%s
+\11\01timeofday|%s\r\n
 
+; --- Wind ---
+; Explicitly reset to Standard Data (\11\01) before printing wind
 ;;WindReading
-\11\01wind:%s|
-\13\02%s
+\11\01wind:\W%2.2f\r\n
+
+; --- Start List ---
+
+;;StartListHeader
+\11\01startlist-event|
+\13\02%s\r\n
 
 ;;StartList
-\11\01startlist|%e|%l|%i|%f|%s|%a
+\11\01startlist|lane=\L|bib=\I|first=\F|last=\N|club=\A\r\n
