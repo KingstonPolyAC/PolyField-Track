@@ -50,8 +50,10 @@ export default function LicenseGate({ onActivated }) {
         </div>
         <div style={{ fontSize: '0.85em', color: '#7a9ab8', textAlign: 'center', lineHeight: 1.5 }}>
           Enter your license key to activate.<br />
-          Get a free key at{' '}
-          <span style={{ color: '#4a9ade' }}>polyfield.co.uk</span>
+          Get a key at{' '}
+          <a href="https://download.polyfield.co.uk" target="_blank" rel="noreferrer" style={{ color: '#4a9ade', textDecoration: 'none' }}>
+            download.polyfield.co.uk
+          </a>
         </div>
 
         <input
@@ -103,8 +105,8 @@ export default function LicenseGate({ onActivated }) {
         </button>
 
         <div style={{ fontSize: '0.72em', color: '#4a6a88', textAlign: 'center', lineHeight: 1.5 }}>
-          PolyField Track is free for athletics clubs and nonprofits.<br />
-          Donations to Kingston &amp; Polytechnic AC are appreciated.
+          PolyField Track by Kingston &amp; Polytechnic AC.<br />
+          support@polyfield.co.uk
         </div>
       </div>
     </div>
