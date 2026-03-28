@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChooseDirectory, EnterFullScreen, ExitFullScreen, GetWebInterfaceInfo, SaveGraphic, GetInitialDir, OpenClubList } from "../wailsjs/go/main/App";
+import { ChooseDirectory, EnterFullScreen, ExitFullScreen, GetWebInterfaceInfo, SaveGraphic, GetInitialDir, OpenClubList, GetLicenseStatus, DeactivateLicense } from "../wailsjs/go/main/App";
 import { THEMES, getColumnWidths, shortenClub } from './themes';
 import { useTranslation } from './i18n';
 import { useRunningClock } from './clockUtils';
 import polyfieldLogo from './polyfield-logo.png';
 import SocialGraphic from './SocialGraphic';
+import LicenseGate from './LicenseGate';
 
 // Fixed dimensions for the default table container.
 const DEFAULT_TABLE_HEIGHT = 192; // in pixels
@@ -106,6 +107,16 @@ function App() {
   );
 
   const { t, language, setLanguage } = useTranslation();
+
+  // === LICENSE STATE ===
+  // null = checking, false = not activated, object = activated license info
+  const [licenseStatus, setLicenseStatus] = useState(null);
+
+  useEffect(() => {
+    GetLicenseStatus().then(status => {
+      setLicenseStatus(status.activated ? status : false);
+    }).catch(() => setLicenseStatus(false));
+  }, []);
 
   // === CORE STATE ===
   const [currentLifData, setCurrentLifData] = useState(null);
@@ -1301,6 +1312,12 @@ function App() {
     }
   };
 
+  // Show nothing while checking license, gate if not activated
+  if (licenseStatus === null) return null;
+  if (licenseStatus === false) {
+    return <LicenseGate onActivated={(info) => setLicenseStatus(info)} />;
+  }
+
   return (
     <div style={containerStyle}>
       {/* Logo on the left side below the preview */}
@@ -1724,8 +1741,28 @@ function App() {
           color: '#7a9ab8',
           borderTop: '1px solid #1a3050',
           backgroundColor: '#0a1628',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
         }}>
-          {t('common.version')}
+          <span>{t('common.version')}</span>
+          {licenseStatus && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9em' }}>
+              <span style={{ color: '#4a7a9b' }}>
+                {licenseStatus.customerName || licenseStatus.customerEmail || licenseStatus.maskedKey}
+              </span>
+              <button
+                onClick={async () => {
+                  if (window.confirm('Deactivate this license? You can re-activate with the same key.')) {
+                    await DeactivateLicense();
+                    setLicenseStatus(false);
+                  }
+                }}
+                style={{ fontSize: '0.8em', color: '#4a6a88', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px' }}
+                title="Deactivate license"
+              >
+                Deactivate
+              </button>
+            </span>
+          )}
         </div>
       </div>
 

@@ -106,6 +106,26 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class LicenseStatus {
+	    activated: boolean;
+	    customerName: string;
+	    customerEmail: string;
+	    maskedKey: string;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new LicenseStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.activated = source["activated"];
+	        this.customerName = source["customerName"];
+	        this.customerEmail = source["customerEmail"];
+	        this.maskedKey = source["maskedKey"];
+	        this.error = source["error"];
+	    }
+	}
 
 }
 
