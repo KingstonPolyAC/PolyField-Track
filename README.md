@@ -42,4 +42,14 @@ Each release includes:
 
 ---
 
-*PolyField Track is developed and maintained by Kingston Athletic Club and Polytechnic Harriers (KACPH).*
+## Licence
+
+PolyField Track is free for **non-commercial use** under the [CC BY-NC 4.0](./LICENSE) licence.
+
+**Commercial use** — including timing companies, event management businesses, and commercial results or broadcast services — requires a separate commercial licence.
+
+For commercial licensing enquiries: [support@polyfield.co.uk](mailto:support@polyfield.co.uk)
+
+---
+
+*PolyField Track is developed and maintained by PolyField by KACPH (Kingston Athletic Club and Polytechnic Harriers).*
