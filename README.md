@@ -31,6 +31,7 @@ Each release includes:
 - `PolyField-Track-mac.zip` — macOS application
 - `PolyField-Track.exe` — Windows executable
 - `polyfield.lss` — FinishLynx LSS script for running clock integration
+- `polyfield-wind.lss` — FinishLynx LSS script for wind integration
 
 ---
 
