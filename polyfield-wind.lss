@@ -1,0 +1,47 @@
+; PolyField Track — Wind-only LSS (Raw mode)
+; Use this as a SECOND scoreboard entry in FinishLynx alongside polyfield.lss.
+; Set Running Time to Raw. Points to the same IP and port as the main entry.
+; Raw mode is required for ;;Wind to fire.
+
+; PolyField Track — FinishLynx LSS Script v2.0
+; Outputs pipe-delimited text via UDP to PolyField Track on port 5001.
+; Defaults: 9600,8,N,1
+
+; --- Clock & Timing State ---
+
+;;TimeArmed
+
+;;TimeRunning
+
+;;TimeUpdate
+
+;;TimeStopped
+
+;;TimePaused
+
+;;TimeOfDay
+
+; --- Wind (Raw mode — fires on every beam break, filter "no data" in receiver) ---
+
+;;Wind
+\12\01wind:%s\r\n
+
+; --- Start List (sent when event is loaded, before gun) ---
+
+;;StartListHeader
+
+;;StartList
+
+; --- Started (sent once gun fires — keeps start list visible during race) ---
+
+;;StartedHeader
+
+;;Started
+
+; --- Results (Live) — sent each time results are updated ---
+
+;;ResultsHeader
+
+;;Results
+
+;;ResultsTrailer
