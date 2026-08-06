@@ -112,7 +112,7 @@ Open the Layout Builder to design custom scoreboard layouts from widgets. Each l
 - **Overlapping widgets:** use the **◀ N / M ▶** navigator at the top of the Properties panel to cycle selection through every widget, including ones hidden behind others.
 - **Assign** a layout to a screen (or the scoreboard preview) from the Screens panel.
 
-*[ Add a screenshot here: `![Layout Builder](assets/layout-builder.png)` ]*
+![The Layout Builder — widget palette on the left, the layout canvas in the middle, and the properties panel (with the widget navigator) on the right](assets/layout-builder.png)
 
 ## Widget reference
 
@@ -152,9 +152,13 @@ The web views are best accessed through the web interface, using the access deta
 
 Displays results in a 2×2 or 3×2 matrix. Configure it to show the latest results or rotate through all available results; adapt the text size; and use full-screen mode to hide the toolbar (any mouse movement pops it back up). Results paginate, with the current page shown at the top. The search icon opens the athlete kiosk.
 
+![Multi-Result view — a 2×2 grid of results with the toolbar along the bottom](assets/multi-result.png)
+
 ### Athlete kiosk (self-service)
 
 Open `<IP-ADDRESS>:3000/athlete`. An athlete searches by name or bib number; clicking a name shows all their performances in the current results directory. Clicking a result card displays it full-screen for photo opportunities. **Reset** clears the search; the back button returns to the search field.
+
+![The athlete self-service kiosk — search by name or bib number](assets/athlete-kiosk.png)
 
 ## FinishLynx & TimeTronics setup
 
