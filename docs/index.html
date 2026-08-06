@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PolyField Track — Manual</title>
+<meta name="description" content="Help and user manual for PolyField Track — results viewing and display software for FinishLynx and TimeTronics photo-finish systems." />
+<style>
+  :root{
+    --navy:#0d1b2a; --navy2:#0f2233; --panel:#12293d; --line:#1e3a52;
+    --blue:#1e88e5; --blue-d:#1465c0; --text:#dbe6f0; --muted:#8fa9c0;
+    --amber:#f5a623; --green:#2e7d32; --radius:10px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--navy);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.65;font-size:16px}
+  a{color:var(--blue);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{background:#0a1420;border:1px solid var(--line);border-radius:5px;padding:1px 6px;
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:0.88em;color:#a8d4ff}
+
+  /* Layout */
+  .wrap{display:flex;min-height:100vh;max-width:1180px;margin:0 auto}
+  aside{width:250px;flex:0 0 250px;border-right:1px solid var(--line);
+    padding:24px 18px;position:sticky;top:0;height:100vh;overflow-y:auto}
+  main{flex:1;min-width:0;padding:36px 44px 80px}
+  @media(max-width:820px){
+    .wrap{flex-direction:column}
+    aside{width:auto;flex:none;height:auto;position:static;border-right:none;
+      border-bottom:1px solid var(--line)}
+    main{padding:24px 20px 60px}
+  }
+
+  /* Sidebar */
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .brand .dot{width:12px;height:12px;border-radius:50%;background:var(--blue)}
+  .brand b{font-size:1.05rem;letter-spacing:.02em}
+  .tag{color:var(--muted);font-size:.78rem;margin:0 0 18px}
+  nav a{display:block;color:var(--muted);padding:6px 10px;border-radius:7px;
+    font-size:.9rem;margin-bottom:2px}
+  nav a:hover{background:var(--panel);color:var(--text);text-decoration:none}
+  nav .grp{color:#5f7c96;font-size:.68rem;text-transform:uppercase;letter-spacing:.09em;
+    margin:16px 10px 6px;font-weight:700}
+
+  /* Content */
+  h1{font-size:2rem;margin:.2em 0 .1em;letter-spacing:-.01em}
+  h2{font-size:1.4rem;margin:2.2em 0 .5em;padding-top:.4em;border-top:1px solid var(--line);
+    color:#eaf2fb}
+  h2:first-of-type{border-top:none;padding-top:0}
+  h3{font-size:1.08rem;margin:1.6em 0 .3em;color:#cfe0f0}
+  p,li{color:var(--text)}
+  ul,ol{padding-left:1.3em}
+  li{margin:.28em 0}
+  .lead{font-size:1.12rem;color:#c7d7e6}
+  .hero{background:linear-gradient(160deg,var(--navy2),var(--panel));
+    border:1px solid var(--line);border-radius:var(--radius);padding:26px 28px;margin:14px 0 6px}
+  .btn{display:inline-block;background:var(--blue-d);color:#fff;padding:10px 18px;
+    border-radius:8px;font-weight:600;margin-top:12px}
+  .btn:hover{background:var(--blue);text-decoration:none}
+  .callout{border-left:4px solid var(--blue);background:var(--panel);
+    border-radius:0 8px 8px 0;padding:12px 16px;margin:16px 0}
+  .callout.tip{border-color:var(--amber)}
+  .callout.tip b{color:var(--amber)}
+  .callout b{color:var(--blue)}
+  .shot{border:1px dashed var(--line);border-radius:8px;color:var(--muted);
+    text-align:center;padding:20px;margin:16px 0;font-size:.85rem;background:#0b1725}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:.92rem}
+  th,td{border:1px solid var(--line);padding:8px 12px;text-align:left}
+  th{background:var(--panel)}
+  .wip{display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);
+    border-radius:20px;padding:2px 9px;margin-left:8px;vertical-align:middle}
+  footer{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);
+    color:var(--muted);font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside>
+    <div class="brand"><span class="dot"></span><b>PolyField&nbsp;Track</b></div>
+    <p class="tag">Help &amp; User Manual</p>
+    <nav>
+      <div class="grp">Introduction</div>
+      <a href="#overview">Overview</a>
+      <a href="#getting-started">Getting started</a>
+      <div class="grp">The desktop app</div>
+      <a href="#control">Staying in control</a>
+      <a href="#text-screensaver">Text &amp; screensaver</a>
+      <a href="#text-size">Text size</a>
+      <a href="#rotation">Rotation modes</a>
+      <div class="grp">Web views</div>
+      <a href="#web-views">Accessing web views</a>
+      <a href="#multi-result">Multi-Result view</a>
+      <a href="#kiosk">Athlete kiosk</a>
+      <div class="grp">More</div>
+      <a href="#new-features">Newer features</a>
+      <a href="#download">Download &amp; support</a>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <h1 style="margin-top:0">PolyField Track</h1>
+      <p class="lead" style="margin-bottom:6px">A results viewing and display software package for FinishLynx and TimeTronics photo-finish systems.</p>
+      <p style="color:var(--muted);margin:0">Runs on Windows and Mac as a desktop device linked to your photo-finish results folder.</p>
+      <a class="btn" href="https://www.polyfield.co.uk">Download from polyfield.co.uk</a>
+    </div>
+
+    <p class="callout"><b>Note</b> — this manual is being updated for the latest version. The sections below reflect the core workflow; newer features (multiple overlays, the countdown widget, the Layout Builder, records and line view) are being added.</p>
+
+    <h2 id="overview">Overview</h2>
+    <p>PolyField Track enables a web-based user interface for any device on the network to display results in multiple formats, and a self-service kiosk mode for athletes to search their own results.</p>
+    <p>It keeps the operator in control, only displaying once a result is saved to ensure positive validation of results prior to display. Multiple saves are supported, enabling early display of athletes in distance races, or display once the top&nbsp;3 athletes have performances assigned.</p>
+
+    <h2 id="getting-started">Getting started</h2>
+    <h3>Set the results directory</h3>
+    <p>First set the results directory — this is the folder FinishLynx or TimeTronics will save your results into (LIF, etc.). Click the red button in the top-right corner, <b>“Select Results Folder”</b>.</p>
+    <div class="shot">[ screenshot: Select Results Folder ]</div>
+    <p>Once set, the web user interface will build and access details will be displayed. You only need one instance of the software to be running; multiple displays are supported, with the maximum being determined by your network and the computer running the software.</p>
+    <p>You can change the results folder once set by re-visiting the top-right button <b>“Change Folder”</b>.</p>
+
+    <h2 id="control">Staying in control</h2>
+    <p>Whilst the desktop app can perform all functions, it is advisable to leave it on this screen and use a separate device or second screen connected to the web interface — leaving you in control of the Screensaver and Text display functions.</p>
+
+    <h2 id="text-screensaver">Text &amp; screensaver</h2>
+    <p>These enable you to display graphics or text messages on the connected displays, engaging your spectators. Sponsor graphics etc. can be shown this way.</p>
+    <p>You can cancel the graphics using the <b>Clear</b> button, or wait for the next Save to a result file — this will override the graphics and return to the result displays.</p>
+
+    <h2 id="text-size">Text size</h2>
+    <p>The default text size can be adjusted with the <b>+</b> and <b>−</b> buttons.</p>
+
+    <h2 id="rotation">Rotation modes</h2>
+    <p>The rotation mode determines how results with more than 8 competitors will display:</p>
+    <table>
+      <tr><th>Mode</th><th>Behaviour</th></tr>
+      <tr><td><b>Scroll</b></td><td>Top 3 rows are locked; rows 4+ scroll through the remaining competitors.</td></tr>
+      <tr><td><b>Page</b></td><td>Result paginates, showing 1–8 then 9–16 etc. on a rotation basis.</td></tr>
+      <tr><td><b>Scroll All</b></td><td>All 8 rows scroll through the competitors with no locked positions.</td></tr>
+    </table>
+
+    <h2 id="web-views">Accessing the web views</h2>
+    <p>The web views are best accessed through the web interface, using the access details provided at the top of the desktop app.</p>
+
+    <h2 id="multi-result">Multi-Result view</h2>
+    <div class="shot">[ screenshot: Multi-Result view ]</div>
+    <p>The Multi-Result view displays results in a 2×2 or 3×2 matrix layout. They can be configured to show the latest results or rotate through all available results. The text size can be adapted, and a full-screen mode is available that hides the toolbar — any mouse movement will temporarily pop the toolbar up before hiding on inactivity again.</p>
+    <p>Results paginate, with the current page shown at the top for tracking. The search icon takes you to the self-service results kiosk.</p>
+
+    <h2 id="kiosk">Athlete kiosk (self-service)</h2>
+    <p>The kiosk can also be accessed by directly browsing to <code>&lt;IP-ADDRESS&gt;:3000/athlete</code>.</p>
+    <p>By default the screen displays a search bar. An athlete can search for themselves by name or bib number, populating a drop-down list. Clicking on any name displays all performances of that athlete in the current results directory.</p>
+    <p>Clicking on any of these result cards displays that result full-screen for photo opportunities. <b>Reset</b> wipes the current search, and the back button in the top-left returns you to the search field.</p>
+
+    <h2 id="new-features">Newer features <span class="wip">Being expanded</span></h2>
+    <p>These areas are part of the current release and full guidance is being written:</p>
+    <ul>
+      <li><b>Displays &amp; the Layout Builder</b> — design custom scoreboard layouts from widgets and assign them per screen (via QR codes).</li>
+      <li><b>Overlays</b> — text, screensaver, line view, clock, records and countdown, which can now be triggered in any combination.</li>
+      <li><b>Countdown overlay</b> — count down to a target time of day with an editable caption.</li>
+      <li><b>Records &amp; line view</b> — celebratory record cards and photo-finish images on your displays.</li>
+      <li><b>Themes, bibs &amp; club abbreviations</b>, and choosing the network card on multi-adapter PCs.</li>
+    </ul>
+
+    <h2 id="download">Download &amp; support</h2>
+    <p>Download the latest version from <a href="https://www.polyfield.co.uk">www.polyfield.co.uk</a>, or from the <a href="https://github.com/KingstonPolyAC/PolyField-Track/releases">releases page</a>.</p>
+    <p>Support: <a href="mailto:support@polyfield.co.uk">support@polyfield.co.uk</a></p>
+
+    <footer>
+      PolyField Track — Gordon Lester · <a href="https://www.polyfield.co.uk">www.polyfield.co.uk</a>
+    </footer>
+  </main>
+</div>
+</body>
+</html>
