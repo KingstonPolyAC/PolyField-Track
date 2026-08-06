@@ -167,6 +167,8 @@ Open `<IP-ADDRESS>:3000/athlete`. An athlete searches by name or bib number; cli
 - **Line view** — export your photo-finish images (JPG) into the monitored results folder; the Line View button enables once they appear.
 - **Results** — save your LIF as normal; PolyField only displays saved results.
 
+For step-by-step FinishLynx scoreboard configuration, see the **[Scoreboard settings guide (PDF)](assets/scoreboard-settings.pdf)**.
+
 ## Networking
 
 - The app serves on **port 3000** and advertises itself as `track.local` on the network, so displays can use `http://track.local:3000` without knowing the IP.

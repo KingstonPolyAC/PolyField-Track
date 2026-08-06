@@ -4,6 +4,8 @@
 
 Developed by [PolyField](https://www.polyfield.co.uk) part of [Kingston Athletic Club and Polytechnic Harriers (KACPH)](https://www.kingstonandpoly.org), PolyField Track connects to FinishLynx and Timetronics photo finish systems and distributes live results to browser-based display screens across a local network — no additional software required on the display device.
 
+📖 **[Read the manual and help guide →](https://kingstonpolyac.github.io/PolyField-Track/)**
+
 ---
 
 ## Key Features
@@ -32,6 +34,13 @@ Each release includes:
 - `PolyField-Track.exe` — Windows executable
 - `polyfield.lss` — FinishLynx LSS script for running clock integration
 - `polyfield-wind.lss` — FinishLynx LSS script for wind integration
+
+---
+
+## Documentation
+
+- **[Online manual &amp; help guide](https://kingstonpolyac.github.io/PolyField-Track/)** — the full operator manual
+- **[Scoreboard settings (PDF)](./PolyField%20Scoreboard%20settings.pdf)** — FinishLynx scoreboard configuration
 
 ---
 
