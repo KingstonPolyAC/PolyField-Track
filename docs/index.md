@@ -30,7 +30,7 @@ It keeps the **operator in control**: results only appear once they are saved, e
 
 This is the folder FinishLynx or TimeTronics saves results into (LIF, etc.). Click the red button in the top-right corner, **“Select Results Folder”**. You can change it later with **“Change Folder”**.
 
-*[ Add a screenshot here — for example: `![Select Results Folder](assets/select-folder.png)` ]*
+![Set the results folder or modify the path in the top right corner:](assets/desktop.png)
 
 Once set, the web interface builds and the access address is shown at the top of the desktop app (e.g. `http://track.local:3000` or `http://<your-IP>:3000`).
 
@@ -109,10 +109,10 @@ Open the Layout Builder to design custom scoreboard layouts from widgets. Each l
 
 - **Add widgets** from the palette on the left, grouped by Current Event, Results, Overlays and Information.
 - **Select a widget** to edit its **Properties** on the right — position & size, columns, text size, font, colours and per-widget options.
-- **Overlapping widgets:** use the **◀ N / M ▶** navigator at the top of the Properties panel to cycle selection through every widget, including ones hidden behind others.
+- **Overlapping widgets:** use the **◀ Widgets ▶** navigator at the top of the Properties panel to cycle selection through every widget, including ones hidden behind others.
 - **Assign** a layout to a screen (or the scoreboard preview) from the Screens panel.
 
-![The Layout Builder — widget palette on the left, the layout canvas in the middle, and the properties panel (with the widget navigator) on the right](assets/layout-builder.png)
+![The Layout Builder — widget palette on the left, the layout canvas in the middle, and the properties panel (with the widget navigator) on the right](assets/Layout-Builder.png)
 
 ## Widget reference
 
