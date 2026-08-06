@@ -1,0 +1,8 @@
+title: PolyField Track — Manual
+description: Help and user manual for PolyField Track — results viewing and display software for FinishLynx and TimeTronics photo-finish systems.
+markdown: kramdown
+kramdown:
+  input: GFM
+defaults:
+  - scope: { path: "" }
+    values: { layout: default }
