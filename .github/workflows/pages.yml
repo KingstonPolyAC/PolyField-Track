@@ -10,10 +10,10 @@ permissions:
   pages: write
   id-token: write
 
-# Allow one concurrent deployment; do NOT cancel an in-progress run,
-# so a running deploy finishes instead of being cancelled by a new push.
+# Own concurrency group (not the legacy "pages" group) so leftover
+# pages-build-deployment runs can't cancel this one.
 concurrency:
-  group: "pages"
+  group: "pages-docs-deploy"
   cancel-in-progress: false
 
 jobs:
