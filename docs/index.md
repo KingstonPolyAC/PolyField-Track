@@ -50,7 +50,7 @@ The control panel is the operator's home. Along the top you set the results fold
 | **Screensaver** | Show a linked **image** or a chosen **saved layout** across the screensaver area. If a source is already set, one press toggles it on/off; the ⚙ button re-opens the options. |
 | **Line View** | Push the latest photo-finish image to the displays. Greyed out until photo-finish JPGs appear in the results folder. |
 | **Clock** | Show the running clock full-screen on screens with a clock widget. |
-| **Records** | Show celebratory record cards for athletes flagged with a record. Prev / Next step through the flagged athletes. |
+| **Records** | Show celebratory record cards for athletes flagged with a record. Prev / Next step through the flagged athletes or manual selection. |
 | **Countdown** | Count down to a target time of day. Enter the time and Start; it hides itself at zero. |
 | **Layout Builder** | Open the layout designer (see below). |
 | **Browse LIF** | Re-show any previous result from the monitored folder. |
@@ -74,6 +74,9 @@ Counts down to a **target time of day**, read from each screen's own clock. Ente
 ### Records
 
 Flag an athlete's record in FinishLynx (see [setup](#finishlynx--timetronics-setup)), then press **Records** to show a celebratory card — athlete, category, event, club and time. Prev / Next step through multiple flagged athletes.
+Manual selection of an athlete from an existing LIF file and flagging them as a Record is also possible. Press **Records** then **Manual Selection** to start the 3 step flow. 1. Choose the race. 2. Choose the Performance. 3. Choose or input the Record type. 
+
+![Manual records selection:](assets/records.png)
 
 ### Line view
 
@@ -180,10 +183,10 @@ For step-by-step FinishLynx scoreboard configuration, see the **[Scoreboard sett
 | Symptom | Check |
 |---|---|
 | Line View button is greyed out | No photo-finish JPGs in the monitored folder yet — check your FinishLynx image export path. |
-| Records shows nothing | The athlete must be flagged in FinishLynx User 3, and the layout must contain a Record Overlay widget. |
+| Records shows nothing | The athlete must be flagged in FinishLynx User 3 or via manual selection, and the layout must contain a Record Overlay widget. |
 | A display shows “waiting for layout” | Assign a layout to that screen in the Screens panel. |
 | An old result reappeared | Opening a file in FinishLynx no longer promotes it; only a real change does. Use Browse LIF to re-show past results intentionally. |
-| Displays can't connect | Confirm the same network, port 3000 reachable, and (multi-card PCs) the right network adapter selected. |
+| Displays can't connect | Confirm the same network, port 3000 reachable, and (multi-card PCs) the right network adapter is selected. |
 
 ## Download & support
 
