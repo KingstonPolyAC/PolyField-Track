@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ page.lang | default: 'en' }}">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,10 +20,17 @@
 
   .page{max-width:860px;margin:0 auto;padding:0 22px 90px}
   header.top{border-bottom:1px solid var(--line);margin-bottom:8px}
-  .top .inner{max-width:860px;margin:0 auto;padding:18px 22px;display:flex;align-items:center;gap:10px}
+  .top .inner{max-width:860px;margin:0 auto;padding:18px 22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .top .dot{width:12px;height:12px;border-radius:50%;background:var(--blue)}
   .top b{font-size:1.05rem;letter-spacing:.02em}
-  .top span{color:var(--muted);font-size:.8rem;margin-left:auto}
+  .top .subtitle{color:var(--muted);font-size:.8rem;margin-left:8px}
+
+  /* Language switcher */
+  .langs{margin-left:auto;display:flex;gap:6px}
+  .langs a{color:var(--muted);font-size:.78rem;font-weight:600;letter-spacing:.03em;
+    padding:3px 9px;border:1px solid var(--line);border-radius:20px;background:var(--navy2)}
+  .langs a:hover{color:var(--text);text-decoration:none;border-color:var(--blue)}
+  .langs a.on{background:var(--blue);border-color:var(--blue);color:#fff}
 
   h1{font-size:2.1rem;margin:.6em 0 .1em;letter-spacing:-.01em}
   h2{font-size:1.4rem;margin:2em 0 .5em;padding-top:.5em;border-top:1px solid var(--line);color:#eaf2fb}
@@ -59,17 +66,32 @@
     padding:14px 18px 14px 34px;margin:18px 0 26px;font-size:.92rem}
   #markdown-toc:before{content:"Contents";display:block;margin-left:-16px;margin-bottom:6px;
     color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;font-weight:700}
+  body[data-lang="fr"] #markdown-toc:before{content:"Sommaire"}
+  body[data-lang="es"] #markdown-toc:before{content:"Contenido"}
+  body[data-lang="nl"] #markdown-toc:before{content:"Inhoud"}
   #markdown-toc a{color:var(--muted)}
   #markdown-toc a:hover{color:var(--text)}
 
   footer{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
 </style>
 </head>
-<body>
+{% case page.lang %}
+{% when 'fr' %}{% assign subtitle = 'Aide et manuel' %}
+{% when 'es' %}{% assign subtitle = 'Ayuda y manual' %}
+{% when 'nl' %}{% assign subtitle = 'Help &amp; handleiding' %}
+{% else %}{% assign subtitle = 'Help &amp; User Manual' %}
+{% endcase %}
+<body data-lang="{{ page.lang | default: 'en' }}">
   <header class="top">
     <div class="inner">
       <span class="dot"></span><b>PolyField&nbsp;Track</b>
-      <span>Help &amp; User Manual</span>
+      <span class="subtitle">{{ subtitle }}</span>
+      <nav class="langs">
+        <a href="{{ '/' | relative_url }}"{% if page.lang == 'en' or page.lang == nil %} class="on"{% endif %}>EN</a>
+        <a href="{{ '/fr/' | relative_url }}"{% if page.lang == 'fr' %} class="on"{% endif %}>FR</a>
+        <a href="{{ '/es/' | relative_url }}"{% if page.lang == 'es' %} class="on"{% endif %}>ES</a>
+        <a href="{{ '/nl/' | relative_url }}"{% if page.lang == 'nl' %} class="on"{% endif %}>NL</a>
+      </nav>
     </div>
   </header>
   <div class="page">

@@ -1,5 +1,7 @@
 ---
 title: PolyField Track — Manual
+lang: en
+permalink: /
 ---
 
 # PolyField Track
@@ -73,7 +75,7 @@ Counts down to a **target time of day**, read from each screen's own clock. Ente
 
 ### Records
 
-Flag an athlete's record in FinishLynx (see [setup](#finishlynx--timetronics-setup)), then press **Records** to show a celebratory card — athlete, category, event, club and time. Prev / Next step through multiple flagged athletes.
+Flag an athlete's record in FinishLynx (see [setup](#finishlynx-setup)), then press **Records** to show a celebratory card — athlete, category, event, club and time. Prev / Next step through multiple flagged athletes.
 Manual selection of an athlete from an existing LIF file and flagging them as a Record is also possible. Press **Records** then **Manual Selection** to start the 3 step flow. 1. Choose the race. 2. Choose the Performance. 3. Choose or input the Record type. 
 
 ![Manual records selection:](assets/records.png)
@@ -100,7 +102,7 @@ The default athlete rotation speed is **5 seconds**.
 
 **Browse LIF** lists previous results from the monitored folder so you can re-show any of them — useful for photo opportunities or re-displaying an earlier heat. Opening an old file in FinishLynx does *not* disturb the live display; only a genuine change to a result promotes it.
 
-## Connecting screens
+## Connecting screens {#connecting-screens}
 
 Open `http://<address>:3000/display` on each screen; it auto-assigns a number. The **Screen QR Codes** page (from the Screens panel, or `/screens-overview`) shows a scannable code for every display page, so you can point a phone, tablet or TV browser at the right page quickly.
 
@@ -163,7 +165,7 @@ Open `<IP-ADDRESS>:3000/athlete`. An athlete searches by name or bib number; cli
 
 ![The athlete self-service kiosk — search by name or bib number](assets/athlete-kiosk.png)
 
-## FinishLynx & TimeTronics setup
+## FinishLynx & TimeTronics setup {#finishlynx-setup}
 
 - **Scoreboard scripts** — use the supplied `polyfield.lss` (and `polyfield-wind.lss`) scripts so FinishLynx sends the live running clock and wind to PolyField Track.
 - **Records** — flag an athlete's record in the FinishLynx **User 3** field (e.g. `PB` or `W50 WR`). Record codes are expanded to full titles from the club list.
