@@ -134,6 +134,19 @@ Open the Layout Builder to design custom scoreboard layouts from widgets. Each l
 | Record Overlay | Celebratory record cards (drag-positioned elements, per-element size). |
 | Countdown Overlay | Countdown to a target time with an editable caption. |
 
+## Combined Events points
+
+For a combined-events (multi-event) competition, the results table can show an extra **Combined Event** column that scores each track performance against the official **2026 UKA/ESAA Combined Events Score Tables**.
+
+![A U14B 80mH result with the Combined Event points column — points per athlete, and no score for DNF/DQ](assets/combined-events.png)
+
+- **Add the column** — in the Layout Builder, select a **Results Table** or **Multi-Result** widget and add the **Combined Event** column (Properties → Columns). Tick **Append "pts" to Combined Events points column** to show `617 pts` rather than `617`.
+- **Automatic by event & gender** — the scoring table is chosen from the event name (e.g. `80mH (76.2) U14B`), so every age group is covered — U13 to U20, Senior and Masters — with no per-athlete setup.
+- **Track only** — hurdles and flat races are scored; field events, relays and any event without a matching table are left blank.
+- **Non-finishers** — DNS athletes are not shown; DNF and DQ show no score.
+
+The time used for the lookup is the value displayed (already rounded to the timing precision), so the points match the official tables exactly.
+
 ## Themes, bibs & club abbreviations
 
 **Themes** set the default colours for all displays; you can create, duplicate and edit them. **Bibs** can be shown or hidden in the results view. **Club abbreviations** are managed centrally (edit the club list) and applied everywhere — add a new club or override a built-in abbreviation, and changes reach all displays within a few seconds.

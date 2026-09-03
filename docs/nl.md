@@ -135,6 +135,19 @@ Open de Lay-outbouwer om aangepaste scoreborden te ontwerpen met widgets. Elke l
 | Record-overlay | Feestelijke recordkaarten (versleepbare elementen, grootte per element). |
 | Aftelklok-overlay | Aftellen naar een doeltijd met een bewerkbaar bijschrift. |
 
+## Meerkamppunten
+
+Voor een meerkampwedstrijd kan de resultatentabel een extra kolom **Combined Event** (meerkamp) tonen die elke baanprestatie scoort volgens de officiële **2026 UKA/ESAA-scoretabellen voor meerkamp**.
+
+![Een U14B 80mH-resultaat met de meerkamp-puntenkolom — punten per atleet, en geen score voor DNF/DQ](assets/combined-events.png)
+
+- **Kolom toevoegen** — selecteer in de Lay-outbouwer een **Resultatentabel**- of **Multi-resultaat**-widget en voeg de kolom **Combined Event** toe (Eigenschappen → Kolommen). Vink **"pts" toevoegen aan de meerkamp-puntenkolom** aan om `617 pts` te tonen in plaats van `617`.
+- **Automatisch op onderdeel en geslacht** — de tabel wordt gekozen op basis van de onderdeelnaam (bijv. `80mH (76.2) U14B`), zodat alle leeftijdsgroepen gedekt zijn — U13 t/m U20, Senioren en Masters — zonder instellingen per atleet.
+- **Alleen baan** — horden en vlakke lopen worden gescoord; technische onderdelen, estafettes en onderdelen zonder bijpassende tabel blijven leeg.
+- **Niet-finishers** — DNS-atleten worden niet getoond; DNF en DQ tonen geen score.
+
+De tijd die voor het opzoeken wordt gebruikt is de weergegeven waarde (al afgerond op de tijdregistratieprecisie), zodat de punten exact overeenkomen met de officiële tabellen.
+
 ## Thema's, startnummers & clubafkortingen
 
 **Thema's** bepalen de standaardkleuren voor alle weergaven; u kunt ze maken, dupliceren en bewerken. **Startnummers** kunnen worden getoond of verborgen in de resultatenweergave. **Clubafkortingen** worden centraal beheerd (bewerk de clublijst) en overal toegepast — voeg een nieuwe club toe of overschrijf een ingebouwde afkorting, en de wijzigingen bereiken alle weergaven binnen enkele seconden.

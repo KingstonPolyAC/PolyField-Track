@@ -135,6 +135,19 @@ Ouvrez le Constructeur de mise en page pour concevoir des tableaux d'affichage p
 | Superposition Record | Cartes de célébration des records (éléments positionnables par glisser-déposer, taille par élément). |
 | Superposition Compte à rebours | Décompte jusqu'à une heure cible avec une légende modifiable. |
 
+## Points des épreuves combinées
+
+Pour une compétition d'épreuves combinées, le tableau de résultats peut afficher une colonne supplémentaire **Combined Event** (épreuve combinée) qui note chaque performance de piste selon les **tables officielles 2026 UKA/ESAA des épreuves combinées**.
+
+![Un résultat 80mH U14B avec la colonne de points d'épreuve combinée — points par athlète, et aucun score pour DNF/DQ](assets/combined-events.png)
+
+- **Ajouter la colonne** — dans le Constructeur de mise en page, sélectionnez un widget **Tableau de résultats** ou **Multi-résultats** et ajoutez la colonne **Combined Event** (Propriétés → Colonnes). Cochez **Ajouter « pts » à la colonne de points des épreuves combinées** pour afficher `617 pts` au lieu de `617`.
+- **Automatique selon l'épreuve et le sexe** — la table est déterminée d'après le nom de l'épreuve (p. ex. `80mH (76.2) U14B`), couvrant toutes les catégories — de U13 à U20, Senior et Masters — sans réglage par athlète.
+- **Piste uniquement** — les haies et les courses à plat sont notées ; les concours, les relais et toute épreuve sans table correspondante restent vides.
+- **Non-partants / non-classés** — les athlètes DNS ne sont pas affichés ; DNF et DQ n'affichent aucun score.
+
+Le temps utilisé pour la recherche est la valeur affichée (déjà arrondie à la précision du chronométrage), de sorte que les points correspondent exactement aux tables officielles.
+
 ## Thèmes, dossards et abréviations de clubs
 
 Les **thèmes** définissent les couleurs par défaut de tous les affichages ; vous pouvez les créer, les dupliquer et les modifier. Les **dossards** peuvent être affichés ou masqués dans la vue des résultats. Les **abréviations de clubs** sont gérées de façon centralisée (modifiez la liste des clubs) et appliquées partout — ajoutez un nouveau club ou remplacez une abréviation intégrée, et les changements atteignent tous les affichages en quelques secondes.

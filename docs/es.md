@@ -135,6 +135,19 @@ Abra el Constructor de diseños para diseñar marcadores personalizados a partir
 | Superposición de Récord | Tarjetas de celebración de récords (elementos posicionables por arrastre, tamaño por elemento). |
 | Superposición de Cuenta atrás | Cuenta atrás hasta una hora objetivo con un rótulo editable. |
 
+## Puntos de pruebas combinadas
+
+Para una competición de pruebas combinadas, la tabla de resultados puede mostrar una columna adicional **Combined Event** (prueba combinada) que puntúa cada marca de pista según las **tablas oficiales 2026 UKA/ESAA de pruebas combinadas**.
+
+![Un resultado de 80mH U14B con la columna de puntos de prueba combinada — puntos por atleta y sin puntuación para DNF/DQ](assets/combined-events.png)
+
+- **Añadir la columna** — en el Constructor de diseños, seleccione un widget **Tabla de resultados** o **Multi-resultado** y añada la columna **Combined Event** (Propiedades → Columnas). Marque **Añadir «pts» a la columna de puntos de pruebas combinadas** para mostrar `617 pts` en lugar de `617`.
+- **Automático por prueba y sexo** — la tabla se elige a partir del nombre de la prueba (p. ej. `80mH (76.2) U14B`), cubriendo todas las categorías — de U13 a U20, Senior y Máster — sin configuración por atleta.
+- **Solo pista** — se puntúan las vallas y las carreras lisas; los concursos, los relevos y cualquier prueba sin tabla correspondiente quedan en blanco.
+- **No finalizados** — los atletas DNS no se muestran; DNF y DQ no muestran puntuación.
+
+El tiempo usado para la búsqueda es el valor mostrado (ya redondeado a la precisión del cronometraje), por lo que los puntos coinciden exactamente con las tablas oficiales.
+
 ## Temas, dorsales y abreviaturas de clubes
 
 Los **temas** definen los colores por defecto de todas las pantallas; puede crearlos, duplicarlos y editarlos. Los **dorsales** se pueden mostrar u ocultar en la vista de resultados. Las **abreviaturas de clubes** se gestionan de forma centralizada (edite la lista de clubes) y se aplican en todas partes — añada un club nuevo o sustituya una abreviatura integrada, y los cambios llegan a todas las pantallas en unos segundos.
