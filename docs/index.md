@@ -10,6 +10,18 @@ A results viewing and display software package for FinishLynx and TimeTronics ph
 
 [Download from polyfield.co.uk](https://www.polyfield.co.uk)
 
+<p>
+  <a class="manual-btn" href="https://kingstonpolyac.github.io/PolyField-Server/">
+    PolyField Server Manual →
+  </a>
+</p>
+<style>
+.manual-btn{display:inline-block;padding:8px 16px;border-radius:20px;
+  background:var(--blue,#2f6be5);color:#fff;font-weight:600;text-decoration:none;
+  border:1px solid var(--blue,#2f6be5)}
+.manual-btn:hover{filter:brightness(1.1);text-decoration:none}
+</style>
+
 * Contents
 {:toc}
 
@@ -180,12 +192,60 @@ Open `<IP-ADDRESS>:3000/athlete`. An athlete searches by name or bib number; cli
 
 ## FinishLynx & TimeTronics setup {#finishlynx-setup}
 
-- **Scoreboard scripts** — use the supplied `polyfield.lss` (and `polyfield-wind.lss`) scripts so FinishLynx sends the live running clock and wind to PolyField Track.
+- **Scoreboard scripts** — use the supplied `polyfield.lss`, `polyfield-wind.lss` and `polyfield-backup.lss` scripts so FinishLynx sends the live running clock, wind, start lists and results to PolyField Track. See **[Scoreboard setup](#scoreboard-setup)** below for how to configure each output.
 - **Records** — flag an athlete's record in the FinishLynx **User 3** field (e.g. `PB` or `W50 WR`). Record codes are expanded to full titles from the club list.
 - **Line view** — export your photo-finish images (JPG) into the monitored results folder; the Line View button enables once they appear.
 - **Results** — save your LIF as normal; PolyField only displays saved results.
 
-For step-by-step FinishLynx scoreboard configuration, see the **[Scoreboard settings guide (PDF)](assets/scoreboard-settings.pdf)**.
+### Scoreboard setup (FinishLynx) {#scoreboard-setup}
+
+PolyField Track receives the running clock, start lists, live results and wind over a single UDP feed on **port 5001**. FinishLynx sends this through its **Scoreboard** outputs (**Options → Scoreboard**). Set up the outputs below — each is a **Network (UDP)** scoreboard pointed at the computer running PolyField Track.
+
+**Settings common to every output:**
+
+| Setting | Value |
+|---|---|
+| Serial Port | Network (UDP) |
+| Port | `5001` |
+| IP Address | the IP of the computer running PolyField Track |
+| Code Set | Single Byte |
+| Results | Auto · Paging on |
+
+#### 1. Main output — `polyfield.lss`
+
+The primary feed: running clock, start lists and live results.
+
+![FinishLynx Scoreboard settings for the main PolyField Track output](assets/scoreboard-main.png)
+
+- **Script:** `polyfield.lss` · **Name:** PolyField Track
+- **Running Time:** Normal
+- **Running Time → Options:** *Send results if armed* ✓
+- **Auto Break:** *Finish* ✓ (with *if capturing* ✓)
+- **Results → Options:** *Always send place* ✓ · *Include first name* ✓ · *Track live results* ✓ (leave *Affiliation abbreviation* off — PolyField Track expands club names from its own club list)
+
+#### 2. Wind output — `polyfield-wind.lss`
+
+A dedicated output for wind readings.
+
+![FinishLynx Scoreboard settings for the wind output](assets/scoreboard-wind.png)
+
+- **Script:** `polyfield-wind.lss` · **Name:** PolyField Track Wind
+- **Running Time:** **Raw** — wind fires on every beam break; Raw mode passes each reading straight through (PolyField Track ignores the "no data" values)
+- **Running Time → Options:** *Send results if armed* off
+- **Results → Options:** *Always send place* ✓ · *Include first name* ✓ · *Affiliation abbreviation* ✓ · *Track live results* ✓
+
+#### 3. Backup output — `polyfield-backup.lss` (recommended)
+
+A second, independent copy of the **start list** for resilience. FinishLynx sends each start list only once when the event loads, so a single dropped UDP packet can leave a screen blank. This backup output sends an identical start list from a separate scoreboard, so if one packet is lost the other still arrives. Point it at the **same** PolyField Track computer.
+
+![FinishLynx Scoreboard settings for the backup start-list output](assets/scoreboard-backup.png)
+
+- **Script:** `polyfield-backup.lss` · **Name:** PolyField Track Backup
+- **Running Time:** Normal
+- **Running Time → Options:** *Send results if armed* ✓
+- **Results → Options:** *Always send place* ✓ · *Include first name* ✓ · *Track live results* ✓
+
+> All three outputs can run at once and send to the same IP and port — PolyField Track sorts them out by content.
 
 ## Networking
 

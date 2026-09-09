@@ -11,6 +11,18 @@ Un software de visualización y presentación de resultados para los sistemas de
 
 [Descargar desde polyfield.co.uk](https://www.polyfield.co.uk)
 
+<p>
+  <a class="manual-btn" href="https://kingstonpolyac.github.io/PolyField-Server/">
+    Manual de PolyField Server →
+  </a>
+</p>
+<style>
+.manual-btn{display:inline-block;padding:8px 16px;border-radius:20px;
+  background:var(--blue,#2f6be5);color:#fff;font-weight:600;text-decoration:none;
+  border:1px solid var(--blue,#2f6be5)}
+.manual-btn:hover{filter:brightness(1.1);text-decoration:none}
+</style>
+
 * Contenido
 {:toc}
 
@@ -181,12 +193,60 @@ Abra `<DIRECCIÓN-IP>:3000/athlete`. Un atleta busca por nombre o número de dor
 
 ## Configuración de FinishLynx y TimeTronics {#finishlynx-setup}
 
-- **Scripts de marcador** — use los scripts suministrados `polyfield.lss` (y `polyfield-wind.lss`) para que FinishLynx envíe el reloj en marcha y el viento a PolyField Track.
+- **Scripts de marcador** — use los scripts suministrados `polyfield.lss`, `polyfield-wind.lss` y `polyfield-backup.lss` para que FinishLynx envíe el reloj en marcha, el viento, las listas de salida y los resultados a PolyField Track. Consulte **[Configuración de los marcadores](#scoreboard-setup)** más abajo para configurar cada salida.
 - **Récords** — marque el récord de un atleta en el campo **User 3** de FinishLynx (p. ej. `PB` o `W50 WR`). Los códigos de récord se amplían a títulos completos a partir de la lista de clubes.
 - **Vista de línea** — exporte sus imágenes de foto-finish (JPG) a la carpeta de resultados supervisada; el botón Vista de línea se activa en cuanto aparecen.
 - **Resultados** — guarde su LIF con normalidad; PolyField solo muestra los resultados guardados.
 
-Para la configuración paso a paso del marcador de FinishLynx, consulte la **[guía de ajustes del marcador (PDF)]({{ '/assets/scoreboard-settings.pdf' | relative_url }})**.
+### Configuración de los marcadores (FinishLynx) {#scoreboard-setup}
+
+PolyField Track recibe el reloj en marcha, las listas de salida, los resultados en directo y el viento por una única transmisión UDP en el **puerto 5001**. FinishLynx los envía a través de sus salidas de **Scoreboard** (**Options → Scoreboard**). Configure las salidas siguientes — cada una es un marcador de **Red (UDP)** dirigido al ordenador que ejecuta PolyField Track.
+
+**Ajustes comunes a todas las salidas:**
+
+| Ajuste | Valor |
+|---|---|
+| Serial Port | Network (UDP) |
+| Port | `5001` |
+| IP Address | la IP del ordenador que ejecuta PolyField Track |
+| Code Set | Single Byte |
+| Results | Auto · Paging activado |
+
+#### 1. Salida principal — `polyfield.lss`
+
+La transmisión principal: reloj en marcha, listas de salida y resultados en directo.
+
+![Ajustes del marcador de FinishLynx para la salida principal de PolyField Track](assets/scoreboard-main.png)
+
+- **Script:** `polyfield.lss` · **Name:** PolyField Track
+- **Running Time:** Normal
+- **Running Time → Options:** *Send results if armed* ✓
+- **Auto Break:** *Finish* ✓ (con *if capturing* ✓)
+- **Results → Options:** *Always send place* ✓ · *Include first name* ✓ · *Track live results* ✓ (deje *Affiliation abbreviation* desactivado — PolyField Track expande los nombres de los clubes desde su propia lista de clubes)
+
+#### 2. Salida de viento — `polyfield-wind.lss`
+
+Una salida dedicada a las lecturas de viento.
+
+![Ajustes del marcador de FinishLynx para la salida de viento](assets/scoreboard-wind.png)
+
+- **Script:** `polyfield-wind.lss` · **Name:** PolyField Track Wind
+- **Running Time:** **Raw** — el viento se dispara en cada corte de célula; el modo Raw transmite cada lectura tal cual (PolyField Track ignora los valores «no data»)
+- **Running Time → Options:** *Send results if armed* desactivado
+- **Results → Options:** *Always send place* ✓ · *Include first name* ✓ · *Affiliation abbreviation* ✓ · *Track live results* ✓
+
+#### 3. Salida de respaldo — `polyfield-backup.lss` (recomendado)
+
+Una segunda copia independiente de la **lista de salida** para mayor fiabilidad. FinishLynx envía cada lista de salida solo una vez al cargar la prueba, por lo que un único paquete UDP perdido puede dejar una pantalla en blanco. Esta salida de respaldo envía una lista de salida idéntica desde un marcador distinto: si se pierde un paquete, el otro llega igualmente. Diríjala al **mismo** ordenador PolyField Track.
+
+![Ajustes del marcador de FinishLynx para la salida de respaldo de la lista de salida](assets/scoreboard-backup.png)
+
+- **Script:** `polyfield-backup.lss` · **Name:** PolyField Track Backup
+- **Running Time:** Normal
+- **Running Time → Options:** *Send results if armed* ✓
+- **Results → Options:** *Always send place* ✓ · *Include first name* ✓ · *Track live results* ✓
+
+> Las tres salidas pueden funcionar a la vez y enviar a la misma IP y puerto — PolyField Track las distingue por su contenido.
 
 ## Red
 

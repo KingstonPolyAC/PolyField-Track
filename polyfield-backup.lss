@@ -1,0 +1,67 @@
+; PolyField Track — Start List BACKUP LSS
+; Redundant start-list output. FinishLynx sends the start list only once (on event
+; load / gun) with no refresh, so a single dropped datagram leaves it blank until a
+; manual re-send. Configure this script as a SECOND Network (UDP) scoreboard output,
+; also targeting the PolyField machine on port 5001, so the start list is transmitted
+; TWICE as two independent datagrams. If one is lost to packet loss, the other still
+; delivers it.
+;
+; PolyField treats every startlist-event| header as a fresh full broadcast and
+; de-duplicates athletes by lane, so the second (duplicate) copy is harmless — it
+; simply rebuilds the same list, or fills it in if the first copy was lost.
+;
+; Use ALONGSIDE polyfield.lss (the primary all-in-one output). This script sends
+; ONLY the start list — no clock, wind, or results — to keep the extra traffic minimal.
+;
+; FinishLynx Scoreboard Configuration (second output):
+;   Script:      polyfield-backup.lss
+;   Port:        Network (UDP)
+;   IP Address:  <PolyField machine IP>   (same as the primary output)
+;   Port Number: 5001
+
+;;StartListHeader
+\13\00startlist-event|
+\13\02%s
+\13\00|round=
+\13\05%s
+\13\00|heat=
+\13\06%s
+\13\00|eventno=
+\13\04%s\r\n
+
+;;StartList
+\14\00startlist|lane=
+\14\02%s
+\14\00|bib=
+\14\03%s
+\14\00|first=
+\14\17%s
+\14\00|last=
+\14\18%s
+\14\00|club=
+\14\05%s\r\n
+
+;;StartedHeader
+\13\00startlist-event|
+\13\02%s
+\13\00|round=
+\13\05%s
+\13\00|heat=
+\13\06%s
+\13\00|eventno=
+\13\04%s\r\n
+
+;;Started
+\14\00startlist|lane=
+\14\02%s
+\14\00|bib=
+\14\03%s
+\14\00|first=
+\14\17%s
+\14\00|last=
+\14\18%s
+\14\00|club=
+\14\05%s\r\n
+
+;;ResultsTrailer
+\13\00results-end\r\n

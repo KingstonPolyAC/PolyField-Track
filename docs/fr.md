@@ -11,6 +11,18 @@ Un logiciel de visualisation et d'affichage des résultats pour les systèmes ph
 
 [Télécharger sur polyfield.co.uk](https://www.polyfield.co.uk)
 
+<p>
+  <a class="manual-btn" href="https://kingstonpolyac.github.io/PolyField-Server/">
+    Manuel de PolyField Server →
+  </a>
+</p>
+<style>
+.manual-btn{display:inline-block;padding:8px 16px;border-radius:20px;
+  background:var(--blue,#2f6be5);color:#fff;font-weight:600;text-decoration:none;
+  border:1px solid var(--blue,#2f6be5)}
+.manual-btn:hover{filter:brightness(1.1);text-decoration:none}
+</style>
+
 * Sommaire
 {:toc}
 
@@ -181,12 +193,60 @@ Ouvrez `<ADRESSE-IP>:3000/athlete`. Un athlète recherche par nom ou numéro de 
 
 ## Configuration FinishLynx et TimeTronics {#finishlynx-setup}
 
-- **Scripts de tableau d'affichage** — utilisez les scripts fournis `polyfield.lss` (et `polyfield-wind.lss`) pour que FinishLynx envoie l'horloge en marche et le vent à PolyField Track.
+- **Scripts de tableau d'affichage** — utilisez les scripts fournis `polyfield.lss`, `polyfield-wind.lss` et `polyfield-backup.lss` pour que FinishLynx envoie l'horloge en marche, le vent, les listes de départ et les résultats à PolyField Track. Voir **[Configuration des tableaux d'affichage](#scoreboard-setup)** ci-dessous pour configurer chaque sortie.
 - **Records** — signalez le record d'un athlète dans le champ **User 3** de FinishLynx (par ex. `PB` ou `W50 WR`). Les codes de record sont développés en titres complets à partir de la liste des clubs.
 - **Vue de ligne** — exportez vos images photo-finish (JPG) dans le dossier de résultats surveillé ; le bouton Vue de ligne s'active dès qu'elles apparaissent.
 - **Résultats** — enregistrez votre LIF normalement ; PolyField n'affiche que les résultats enregistrés.
 
-Pour la configuration pas à pas du tableau d'affichage FinishLynx, voir le **[guide des réglages du tableau d'affichage (PDF)]({{ '/assets/scoreboard-settings.pdf' | relative_url }})**.
+### Configuration des tableaux d'affichage (FinishLynx) {#scoreboard-setup}
+
+PolyField Track reçoit l'horloge en marche, les listes de départ, les résultats en direct et le vent sur un seul flux UDP au **port 5001**. FinishLynx les envoie via ses sorties **Scoreboard** (**Options → Scoreboard**). Configurez les sorties ci-dessous — chacune est un tableau d'affichage **Réseau (UDP)** dirigé vers l'ordinateur qui exécute PolyField Track.
+
+**Réglages communs à toutes les sorties :**
+
+| Réglage | Valeur |
+|---|---|
+| Serial Port | Network (UDP) |
+| Port | `5001` |
+| IP Address | l'adresse IP de l'ordinateur exécutant PolyField Track |
+| Code Set | Single Byte |
+| Results | Auto · Paging activé |
+
+#### 1. Sortie principale — `polyfield.lss`
+
+Le flux principal : horloge en marche, listes de départ et résultats en direct.
+
+![Réglages du tableau d'affichage FinishLynx pour la sortie principale de PolyField Track](assets/scoreboard-main.png)
+
+- **Script :** `polyfield.lss` · **Name :** PolyField Track
+- **Running Time :** Normal
+- **Running Time → Options :** *Send results if armed* ✓
+- **Auto Break :** *Finish* ✓ (avec *if capturing* ✓)
+- **Results → Options :** *Always send place* ✓ · *Include first name* ✓ · *Track live results* ✓ (laissez *Affiliation abbreviation* désactivé — PolyField Track développe les noms de clubs à partir de sa propre liste de clubs)
+
+#### 2. Sortie vent — `polyfield-wind.lss`
+
+Une sortie dédiée aux relevés de vent.
+
+![Réglages du tableau d'affichage FinishLynx pour la sortie vent](assets/scoreboard-wind.png)
+
+- **Script :** `polyfield-wind.lss` · **Name :** PolyField Track Wind
+- **Running Time :** **Raw** — le vent se déclenche à chaque coupure de cellule ; le mode Raw transmet chaque relevé tel quel (PolyField Track ignore les valeurs « no data »)
+- **Running Time → Options :** *Send results if armed* désactivé
+- **Results → Options :** *Always send place* ✓ · *Include first name* ✓ · *Affiliation abbreviation* ✓ · *Track live results* ✓
+
+#### 3. Sortie de secours — `polyfield-backup.lss` (recommandé)
+
+Une seconde copie indépendante de la **liste de départ** pour plus de fiabilité. FinishLynx n'envoie chaque liste de départ qu'une seule fois au chargement de l'épreuve ; un seul paquet UDP perdu peut donc laisser un écran vide. Cette sortie de secours envoie une liste de départ identique depuis un tableau d'affichage distinct : si un paquet est perdu, l'autre arrive quand même. Dirigez-la vers le **même** ordinateur PolyField Track.
+
+![Réglages du tableau d'affichage FinishLynx pour la sortie de secours de la liste de départ](assets/scoreboard-backup.png)
+
+- **Script :** `polyfield-backup.lss` · **Name :** PolyField Track Backup
+- **Running Time :** Normal
+- **Running Time → Options :** *Send results if armed* ✓
+- **Results → Options :** *Always send place* ✓ · *Include first name* ✓ · *Track live results* ✓
+
+> Les trois sorties peuvent fonctionner simultanément et envoyer vers la même IP et le même port — PolyField Track les distingue par leur contenu.
 
 ## Réseau
 

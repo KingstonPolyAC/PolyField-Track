@@ -11,6 +11,18 @@ Software voor het bekijken en weergeven van resultaten voor de foto-finishsystem
 
 [Downloaden op polyfield.co.uk](https://www.polyfield.co.uk)
 
+<p>
+  <a class="manual-btn" href="https://kingstonpolyac.github.io/PolyField-Server/">
+    PolyField Server-handleiding →
+  </a>
+</p>
+<style>
+.manual-btn{display:inline-block;padding:8px 16px;border-radius:20px;
+  background:var(--blue,#2f6be5);color:#fff;font-weight:600;text-decoration:none;
+  border:1px solid var(--blue,#2f6be5)}
+.manual-btn:hover{filter:brightness(1.1);text-decoration:none}
+</style>
+
 * Inhoud
 {:toc}
 
@@ -181,12 +193,60 @@ Open `<IP-ADRES>:3000/athlete`. Een atleet zoekt op naam of startnummer; op een 
 
 ## FinishLynx- & TimeTronics-instellingen {#finishlynx-setup}
 
-- **Scoreboard-scripts** — gebruik de meegeleverde scripts `polyfield.lss` (en `polyfield-wind.lss`) zodat FinishLynx de lopende klok en de wind naar PolyField Track stuurt.
+- **Scoreboard-scripts** — gebruik de meegeleverde scripts `polyfield.lss`, `polyfield-wind.lss` en `polyfield-backup.lss` zodat FinishLynx de lopende klok, de wind, startlijsten en resultaten naar PolyField Track stuurt. Zie **[Scoreboard-instellingen](#scoreboard-setup)** hieronder voor het configureren van elke uitvoer.
 - **Records** — markeer het record van een atleet in het veld **User 3** van FinishLynx (bijv. `PB` of `W50 WR`). Recordcodes worden uitgebreid tot volledige titels op basis van de clublijst.
 - **Lijnweergave** — exporteer uw foto-finishafbeeldingen (JPG) naar de bewaakte resultatenmap; de knop Lijnweergave wordt actief zodra ze verschijnen.
 - **Resultaten** — sla uw LIF normaal op; PolyField toont alleen opgeslagen resultaten.
 
-Voor stapsgewijze configuratie van het FinishLynx-scoreboard, zie de **[handleiding scoreboard-instellingen (PDF)]({{ '/assets/scoreboard-settings.pdf' | relative_url }})**.
+### Scoreboard-instellingen (FinishLynx) {#scoreboard-setup}
+
+PolyField Track ontvangt de lopende klok, startlijsten, live resultaten en wind via één UDP-stroom op **poort 5001**. FinishLynx verstuurt deze via zijn **Scoreboard**-uitvoeren (**Options → Scoreboard**). Stel de onderstaande uitvoeren in — elk is een **Netwerk (UDP)**-scoreboard gericht op de computer waarop PolyField Track draait.
+
+**Instellingen die voor elke uitvoer gelden:**
+
+| Instelling | Waarde |
+|---|---|
+| Serial Port | Network (UDP) |
+| Port | `5001` |
+| IP Address | het IP-adres van de computer waarop PolyField Track draait |
+| Code Set | Single Byte |
+| Results | Auto · Paging aan |
+
+#### 1. Hoofduitvoer — `polyfield.lss`
+
+De primaire stroom: lopende klok, startlijsten en live resultaten.
+
+![FinishLynx-scoreboardinstellingen voor de hoofduitvoer van PolyField Track](assets/scoreboard-main.png)
+
+- **Script:** `polyfield.lss` · **Name:** PolyField Track
+- **Running Time:** Normal
+- **Running Time → Options:** *Send results if armed* ✓
+- **Auto Break:** *Finish* ✓ (met *if capturing* ✓)
+- **Results → Options:** *Always send place* ✓ · *Include first name* ✓ · *Track live results* ✓ (laat *Affiliation abbreviation* uit — PolyField Track breidt clubnamen uit via zijn eigen clublijst)
+
+#### 2. Winduitvoer — `polyfield-wind.lss`
+
+Een aparte uitvoer voor windmetingen.
+
+![FinishLynx-scoreboardinstellingen voor de winduitvoer](assets/scoreboard-wind.png)
+
+- **Script:** `polyfield-wind.lss` · **Name:** PolyField Track Wind
+- **Running Time:** **Raw** — de wind vuurt bij elke celonderbreking; de Raw-modus geeft elke meting ongewijzigd door (PolyField Track negeert de «no data»-waarden)
+- **Running Time → Options:** *Send results if armed* uit
+- **Results → Options:** *Always send place* ✓ · *Include first name* ✓ · *Affiliation abbreviation* ✓ · *Track live results* ✓
+
+#### 3. Back-upuitvoer — `polyfield-backup.lss` (aanbevolen)
+
+Een tweede, onafhankelijke kopie van de **startlijst** voor betrouwbaarheid. FinishLynx verstuurt elke startlijst maar één keer wanneer het onderdeel wordt geladen, dus één verloren UDP-pakket kan een scherm leeg laten. Deze back-upuitvoer verstuurt een identieke startlijst vanaf een apart scoreboard: als één pakket verloren gaat, komt het andere alsnog aan. Richt deze op **dezelfde** PolyField Track-computer.
+
+![FinishLynx-scoreboardinstellingen voor de back-upuitvoer van de startlijst](assets/scoreboard-backup.png)
+
+- **Script:** `polyfield-backup.lss` · **Name:** PolyField Track Backup
+- **Running Time:** Normal
+- **Running Time → Options:** *Send results if armed* ✓
+- **Results → Options:** *Always send place* ✓ · *Include first name* ✓ · *Track live results* ✓
+
+> Alle drie de uitvoeren kunnen tegelijk draaien en naar hetzelfde IP en dezelfde poort sturen — PolyField Track onderscheidt ze op inhoud.
 
 ## Netwerk
 
