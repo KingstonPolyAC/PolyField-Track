@@ -11,18 +11,6 @@ Un logiciel de visualisation et d'affichage des résultats pour les systèmes ph
 
 [Télécharger sur polyfield.co.uk](https://www.polyfield.co.uk)
 
-<p>
-  <a class="manual-btn" href="https://kingstonpolyac.github.io/PolyField-Server/">
-    Manuel de PolyField Server →
-  </a>
-</p>
-<style>
-.manual-btn{display:inline-block;padding:8px 16px;border-radius:20px;
-  background:var(--blue,#2f6be5);color:#fff;font-weight:600;text-decoration:none;
-  border:1px solid var(--blue,#2f6be5)}
-.manual-btn:hover{filter:brightness(1.1);text-decoration:none}
-</style>
-
 * Sommaire
 {:toc}
 

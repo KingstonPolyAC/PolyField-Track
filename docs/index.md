@@ -10,18 +10,6 @@ A results viewing and display software package for FinishLynx and TimeTronics ph
 
 [Download from polyfield.co.uk](https://www.polyfield.co.uk)
 
-<p>
-  <a class="manual-btn" href="https://kingstonpolyac.github.io/PolyField-Server/">
-    PolyField Server Manual →
-  </a>
-</p>
-<style>
-.manual-btn{display:inline-block;padding:8px 16px;border-radius:20px;
-  background:var(--blue,#2f6be5);color:#fff;font-weight:600;text-decoration:none;
-  border:1px solid var(--blue,#2f6be5)}
-.manual-btn:hover{filter:brightness(1.1);text-decoration:none}
-</style>
-
 * Contents
 {:toc}
 
