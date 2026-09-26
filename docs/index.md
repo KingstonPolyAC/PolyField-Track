@@ -283,3 +283,89 @@ A second, independent copy of the **start list** for resilience. FinishLynx send
 ## Download & support
 
 Download the latest version from [www.polyfield.co.uk](https://www.polyfield.co.uk) or the [releases page](https://github.com/KingstonPolyAC/PolyField-Track/releases). Support: [support@polyfield.co.uk](mailto:support@polyfield.co.uk).
+
+## API integration {#api-integration}
+
+PolyField Track serves a small **read-only HTTP + JSON API** on **port 3000**, on the **same local network** as your displays. It's the same interface the built-in displays use, so anything on the LAN — a custom scoreboard, a stats dashboard, a stream overlay, a venue's own signage — can read live results, the start list and the running clock straight from the app. Requests are plain `GET`, responses are JSON, there is no authentication, and CORS is open, so a browser page on the LAN can call it directly.
+
+The API is **LAN-only by design** — the app does not expose it to the internet. **Any WAN- or internet-facing integration** (remote scoreboards, cloud services, a second venue) **should be discussed with us first** so it's done safely, typically over a VPN or a controlled reverse proxy rather than by opening the port to the world. Contact [support@polyfield.co.uk](mailto:support@polyfield.co.uk).
+
+**Base URL:** `http://<track-pc-ip>:3000` — find the PC's LAN address from the **Displays** panel, or from `GET /server-info`.
+
+| Method & path | Returns |
+|---|---|
+| `GET /server-info` | The PC's LAN IP. |
+| `GET /latest-lif` | The current result (the one on the displays). `{}` when none. |
+| `GET /all-lif` | An array of all recent results, newest first. |
+| `GET /startlist` | The current event's start list. |
+| `GET /clock-data` | The live running clock (updates continuously). |
+
+### `GET /server-info`
+
+```json
+{ "lanIP": "192.168.0.137" }
+```
+
+### `GET /latest-lif` and `GET /all-lif`
+
+`/latest-lif` returns one **result** object (`{}` when nothing is loaded); `/all-lif` returns an **array** of the same object, newest first. Fields:
+
+- `fileName` — source file name.
+- `eventName` — event title as sent by the timing system.
+- `wind` — wind reading with unit (e.g. `"0.6 m/s"`), or empty.
+- `modifiedTime` — Unix seconds when the result last changed.
+- `competitors[]` — one entry per athlete: `place`, `id` (bib), `firstName`, `lastName`, `affiliation` (club/nation), `time` (already rounded/formatted), and optional `recordFlag` (e.g. `"PB"`, `"W50 WR"`).
+
+```json
+{
+  "fileName": "race01.lif",
+  "eventName": "Men 100m Final",
+  "wind": "0.6 m/s",
+  "modifiedTime": 1790447000,
+  "competitors": [
+    { "place": "1", "id": "1001", "firstName": "Marcell", "lastName": "JACOBS",   "affiliation": "ITA", "time": "9.80", "recordFlag": "PB" },
+    { "place": "2", "id": "1002", "firstName": "Fred",    "lastName": "KERLEY",   "affiliation": "USA", "time": "9.84" },
+    { "place": "3", "id": "1003", "firstName": "Andre",   "lastName": "DE GRASSE", "affiliation": "CAN", "time": "9.89" }
+  ]
+}
+```
+
+### `GET /startlist`
+
+- `eventName`, `round`, `heat`, `eventNo` — event identity (any may be empty).
+- `hasLanes` — `true` for lane-based events (track), `false` otherwise.
+- `entries[]` — `lane`, `id` (bib), `firstName`, `lastName`, `affiliation`.
+
+```json
+{
+  "eventName": "T1 Kestrel Club 75 Race 1 of 6",
+  "round": "",
+  "heat": "",
+  "eventNo": "",
+  "hasLanes": true,
+  "entries": [
+    { "lane": "1", "id": "164", "firstName": "Rocco",  "lastName": "Kothakota", "affiliation": "St Mary's Richmond AC" },
+    { "lane": "2", "id": "60",  "firstName": "Fabian", "lastName": "Higgins",   "affiliation": "Young Athletes Club (YAC)" }
+  ]
+}
+```
+
+### `GET /clock-data`
+
+The live clock from the timing system. Poll it (about once a second) to drive a running clock. `state` is `armed` / `running` / `stopped` / `idle`; `serverNow` is the server time in Unix milliseconds so a client can correct for clock skew.
+
+```json
+{
+  "state": "running",
+  "time": "9.42",
+  "eventName": "Men 100m Final",
+  "eventNo": "12",
+  "round": "1",
+  "heat": "3",
+  "wind": "+0.6",
+  "receivedAt": 1790447079000,
+  "serverNow": 1790447079466
+}
+```
+
+Results and the start list change infrequently — poll every 1–2 seconds (or fetch on demand); only `/clock-data` needs frequent polling while a race is live.
