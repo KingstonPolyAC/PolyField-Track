@@ -130,7 +130,8 @@ Abra el Constructor de diseños para diseñar marcadores personalizados a partir
 | Reloj en marcha / Tiempo detenido | Reloj en directo o congelado. |
 | Nombre de prueba / Viento | Nombre y viento de la prueba actual o del resultado. |
 | Texto personalizado / Logo / Hora del día | Texto estático, una imagen/logo, o la hora. |
-| Resultados RAZA / Concursos | Puntos WPA de para-atletismo, y resultados de concursos PolyField. |
+| Resultados RAZA | Puntos WPA de para-atletismo. |
+| Concursos PolyField (Field Results / Recent Results / Jump Ruler) | Pantallas en directo de concursos, alimentadas por el servidor PolyField Field — véase [Pantallas de saltos horizontales](#horizontal-jump-displays) más abajo. |
 | Superposiciones Texto / Salvapantallas / Vista de línea / Reloj | El banner de texto, la imagen/diseño del salvapantallas, la foto-finish y el reloj a pantalla completa (se muestran cuando el operador activa la superposición correspondiente). |
 | Superposición de Récord | Tarjetas de celebración de récords (elementos posicionables por arrastre, tamaño por elemento). |
 | Superposición de Cuenta atrás | Cuenta atrás hasta una hora objetivo con un rótulo editable. |
@@ -147,6 +148,34 @@ Para una competición de pruebas combinadas, la tabla de resultados puede mostra
 - **No finalizados** — los atletas DNS no se muestran; DNF y DQ no muestran puntuación.
 
 El tiempo usado para la búsqueda es el valor mostrado (ya redondeado a la precisión del cronometraje), por lo que los puntos coinciden exactamente con las tablas oficiales.
+
+## Pantallas de saltos horizontales {#horizontal-jump-displays}
+
+Tres widgets muestran en directo datos de concursos desde un **servidor PolyField Field** en la misma red. Añádalos desde el grupo **Resultados** del Constructor de diseños; cada uno tiene una **dirección IP** y un **puerto** para el servidor (por defecto `192.168.0.90:8080`).
+
+### Jump Ruler (PolyField)
+
+Una regla junto al foso para **salto de longitud y triple salto** — ideal para una tira LED larga y estrecha junto a la pista de impulso (p. ej. 500 mm × 4–6 m). Dibuja una escala de distancias con marcas de metro / 50 cm / 10 cm, señala los tres mejores saltos y muestra los datos del saltador actual.
+
+![El Jump Ruler en el Constructor de diseños — la escala anclada al foso con el saltador actual, el saltador anterior, las chinchetas del top 3 y la media de la competición](assets/jump-ruler.png)
+
+- **Asócielo a una prueba.** Elija la prueba en el menú **Prueba** (solo se listan las pruebas de *saltos horizontales*). Pueden funcionar varias reglas a la vez para distintas pruebas, cada una asociada por separado.
+- **Tabla de batida.** La escala está anclada al foso: introduzca el **inicio de la regla** para salto de longitud y para cada tabla del triple salto (**7 / 9 / 11 / 13 m**, con 2 decimales, p. ej. `11.02`). La tabla activa del atleta (del flujo) determina el inicio usado, para que las marcas caigan siempre en el lugar correcto.
+- **Chinchetas del top 3.** Las tres mejores marcas se muestran como chinchetas de alturas decrecientes (1.ª la más alta, luego 2.ª y 3.ª), con la 1.ª siempre delante. Una marca fuera del rango visible aparece como **flecha** en el borde apuntando en su dirección.
+- **Chincheta de media.** Una chincheta **Avg** opcional traza la media de la competición.
+- **Panel del atleta.** Coloque cada elemento arrastrándolo — **atleta actual**, marca y viento actuales, **atleta anterior** con su marca y viento, tabla actual y mejor marca de la competición — y ajuste para cada uno el **rótulo, el color, el tamaño** y la visibilidad. Dispóngalos como banner superior o panel lateral.
+- **Sentido de carrera.** Elija **izquierda → derecha** o **derecha → izquierda** para que la escala coincida con el sentido de impulso de los atletas hacia el foso.
+- **El flujo:** se selecciona un atleta → se muestra como *actual* (sin marca); se mide su salto → aparecen su *marca y viento*; se selecciona el siguiente atleta → pasa a ser *actual* y el anterior pasa a *anterior*.
+
+### Field Results & Recent Results (PolyField)
+
+**Field Results (PolyField)** — un tablero de clasificación en directo de concursos (puesto, atleta, club, prueba, marca, mejor), con el líder resaltado y los nulos en rojo.
+
+![Field Results (PolyField) — clasificación en directo de concursos con el líder resaltado](assets/field-results.png)
+
+**Recent Results (PolyField)** — las tres últimas marcas de concursos (nombre, prueba, ronda y marca, con viento para los saltos horizontales).
+
+![Recent Results (PolyField) — las tres últimas marcas de concursos](assets/recent-results.png)
 
 ## Temas, dorsales y abreviaturas de clubes
 

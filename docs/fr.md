@@ -130,7 +130,8 @@ Ouvrez le Constructeur de mise en page pour concevoir des tableaux d'affichage p
 | Horloge en marche / Temps arrêté | Horloge en direct ou figée. |
 | Nom de l'épreuve / Vent | Nom et vent de l'épreuve en cours ou du résultat. |
 | Texte personnalisé / Logo / Heure du jour | Texte statique, une image/un logo, ou l'heure. |
-| Résultats RAZA / Concours | Points WPA de para-athlétisme, et résultats des concours PolyField. |
+| Résultats RAZA | Points WPA de para-athlétisme. |
+| Concours PolyField (Field Results / Recent Results / Jump Ruler) | Affichages en direct des concours, alimentés par le serveur PolyField Field — voir [Affichages des sauts horizontaux](#horizontal-jump-displays) ci-dessous. |
 | Superpositions Texte / Économiseur / Vue de ligne / Horloge | La bannière de texte, l'image/mise en page de l'économiseur, la photo-finish et l'horloge plein écran (affichées quand l'opérateur déclenche la superposition correspondante). |
 | Superposition Record | Cartes de célébration des records (éléments positionnables par glisser-déposer, taille par élément). |
 | Superposition Compte à rebours | Décompte jusqu'à une heure cible avec une légende modifiable. |
@@ -147,6 +148,34 @@ Pour une compétition d'épreuves combinées, le tableau de résultats peut affi
 - **Non-partants / non-classés** — les athlètes DNS ne sont pas affichés ; DNF et DQ n'affichent aucun score.
 
 Le temps utilisé pour la recherche est la valeur affichée (déjà arrondie à la précision du chronométrage), de sorte que les points correspondent exactement aux tables officielles.
+
+## Affichages des sauts horizontaux {#horizontal-jump-displays}
+
+Trois widgets affichent en direct les données de concours d'un **serveur PolyField Field** sur le même réseau. Ajoutez-les depuis le groupe **Résultats** du Constructeur de mise en page ; chacun possède une **adresse IP** et un **port** pour le serveur (par défaut `192.168.0.90:8080`).
+
+### Jump Ruler (PolyField)
+
+Une règle placée au bord de la fosse pour le **saut en longueur et le triple saut** — idéale pour une bande LED longue et étroite le long de la piste d'élan (p. ex. 500 mm × 4–6 m). Elle affiche une échelle de distances avec des graduations au mètre / 50 cm / 10 cm, marque les trois meilleurs sauts et présente les informations du sauteur en cours.
+
+![Le Jump Ruler dans le Constructeur de mise en page — l'échelle ancrée à la fosse avec le sauteur en cours, le sauteur précédent, les épingles du top 3 et la moyenne de la compétition](assets/jump-ruler.png)
+
+- **Associez-le à une épreuve.** Choisissez l'épreuve dans le menu **Épreuve** (seules les épreuves de *sauts horizontaux* sont listées). Plusieurs règles peuvent fonctionner simultanément pour différentes épreuves, chacune associée séparément.
+- **Planche d'appel.** L'échelle est ancrée à la fosse : saisissez le **début de la règle** pour le saut en longueur et pour chaque planche du triple saut (**7 / 9 / 11 / 13 m**, à 2 décimales, p. ex. `11.02`). La planche active de l'athlète (fournie par le flux) détermine le début utilisé, pour que les marques tombent toujours au bon endroit.
+- **Épingles du top 3.** Les trois meilleures marques s'affichent en épingles de hauteurs décroissantes (1re la plus haute, puis 2e et 3e), la 1re toujours au premier plan. Une marque hors de la plage visible s'affiche en **flèche** au bord, pointant dans sa direction.
+- **Épingle de moyenne.** Une épingle **Avg** facultative indique la moyenne de la compétition.
+- **Panneau athlète.** Positionnez chaque élément par glisser-déposer — **athlète en cours**, marque et vent en cours, **athlète précédent** avec sa marque et son vent, planche en cours et meilleure marque de la compétition — et réglez pour chacun le **libellé, la couleur, la taille** et la visibilité. Disposez-les en bannière en haut ou en panneau latéral.
+- **Sens de course.** Choisissez **gauche → droite** ou **droite → gauche** pour que l'échelle corresponde au sens d'élan des athlètes vers la fosse.
+- **Le déroulement :** un athlète est sélectionné → affiché comme *en cours* (sans marque) ; son saut est mesuré → sa *marque et son vent* apparaissent ; l'athlète suivant est sélectionné → il devient *en cours* et le précédent passe en *précédent*.
+
+### Field Results & Recent Results (PolyField)
+
+**Field Results (PolyField)** — un tableau de classement en direct des concours (rang, athlète, club, épreuve, marque, meilleure), avec le leader mis en évidence et les essais mordus en rouge.
+
+![Field Results (PolyField) — classement en direct des concours avec le leader mis en évidence](assets/field-results.png)
+
+**Recent Results (PolyField)** — les trois dernières performances de concours (nom, épreuve, tour et marque, avec le vent pour les sauts horizontaux).
+
+![Recent Results (PolyField) — les trois dernières performances de concours](assets/recent-results.png)
 
 ## Thèmes, dossards et abréviations de clubs
 

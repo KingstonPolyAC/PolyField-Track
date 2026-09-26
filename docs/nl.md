@@ -130,7 +130,8 @@ Open de Lay-outbouwer om aangepaste scoreborden te ontwerpen met widgets. Elke l
 | Lopende klok / Gestopte tijd | Live of bevroren klok. |
 | Onderdeelnaam / Wind | Naam en wind van het huidige onderdeel of resultaat. |
 | Aangepaste tekst / Logo / Tijd van de dag | Statische tekst, een afbeelding/logo, of de tijd. |
-| RAZA- / Veldresultaten | WPA-punten voor para-atletiek, en PolyField-veldonderdeelresultaten. |
+| RAZA-klassementen | WPA-punten voor para-atletiek. |
+| PolyField-veldwidgets (Field Results / Recent Results / Jump Ruler) | Live veldonderdeel-weergaven, gevoed door de PolyField Field-server — zie [Weergaven voor horizontale sprongen](#horizontal-jump-displays) hieronder. |
 | Overlays Tekst / Schermbeveiliging / Lijnweergave / Klok | De tekstbanner, schermbeveiligingsafbeelding/-lay-out, foto-finish en schermvullende klok (getoond wanneer de operator de bijbehorende overlay activeert). |
 | Record-overlay | Feestelijke recordkaarten (versleepbare elementen, grootte per element). |
 | Aftelklok-overlay | Aftellen naar een doeltijd met een bewerkbaar bijschrift. |
@@ -147,6 +148,34 @@ Voor een meerkampwedstrijd kan de resultatentabel een extra kolom **Combined Eve
 - **Niet-finishers** — DNS-atleten worden niet getoond; DNF en DQ tonen geen score.
 
 De tijd die voor het opzoeken wordt gebruikt is de weergegeven waarde (al afgerond op de tijdregistratieprecisie), zodat de punten exact overeenkomen met de officiële tabellen.
+
+## Weergaven voor horizontale sprongen {#horizontal-jump-displays}
+
+Drie widgets tonen live veldonderdeelgegevens van een **PolyField Field-server** op hetzelfde netwerk. Voeg ze toe vanuit de groep **Resultaten** in de Lay-outbouwer; elk heeft een **IP-adres** en **poort** voor de server (standaard `192.168.0.90:8080`).
+
+### Jump Ruler (PolyField)
+
+Een liniaal langs de bak voor **verspringen en hinkstapspringen** — ideaal voor een lange, smalle LED-strip naast de aanloop (bijv. 500 mm × 4–6 m). Hij tekent een afstandsschaal met streepjes per meter / 50 cm / 10 cm, markeert de drie beste sprongen en toont de gegevens van de huidige springer.
+
+![De Jump Ruler in de Lay-outbouwer — de aan de bak verankerde schaal met de huidige springer, de vorige springer, de top-3-pinnen en het wedstrijdgemiddelde](assets/jump-ruler.png)
+
+- **Koppel hem aan één onderdeel.** Kies het onderdeel in het **Onderdeel**-menu (alleen onderdelen voor *horizontale sprongen* worden vermeld). Meerdere linialen kunnen tegelijk draaien voor verschillende onderdelen, elk apart gekoppeld.
+- **Afzetbalk.** De schaal is aan de bak verankerd: voer het **liniaalbegin** in voor verspringen en voor elke hinkstap-balk (**7 / 9 / 11 / 13 m**, met 2 decimalen, bijv. `11.02`). De actieve balk van de atleet (uit de feed) bepaalt welk begin wordt gebruikt, zodat markeringen altijd op de juiste plek vallen.
+- **Top-3-pinnen.** De drie beste prestaties verschijnen als pinnen met afnemende hoogte (1e het hoogst, dan 2e en 3e), met de 1e altijd op de voorgrond. Een markering buiten het zichtbare bereik verschijnt als **pijl** aan de rand die de richting aanwijst.
+- **Gemiddelde-pin.** Een optionele **Avg**-pin plot het wedstrijdgemiddelde.
+- **Atletenpaneel.** Sleep elk onderdeel op zijn plaats — **huidige atleet**, huidige prestatie en wind, **vorige atleet** met prestatie en wind, huidige balk en beste van de wedstrijd — en stel per element het **bijschrift, de kleur, de grootte** en zichtbaarheid in. Plaats ze als banner bovenaan of als zijpaneel.
+- **Looprichting.** Kies **links → rechts** of **rechts → links** zodat de schaal overeenkomt met de aanlooprichting van de atleten naar de bak.
+- **De flow:** een atleet wordt geselecteerd → getoond als *huidig* (nog geen markering); de sprong wordt gemeten → de *prestatie en wind* verschijnen; de volgende atleet wordt geselecteerd → die wordt *huidig* en de vorige schuift door naar *vorige*.
+
+### Field Results & Recent Results (PolyField)
+
+**Field Results (PolyField)** — een live klassementbord voor veldonderdelen (plaats, atleet, club, onderdeel, prestatie, beste), met de leider gemarkeerd en ongeldige pogingen in het rood.
+
+![Field Results (PolyField) — live veldonderdeel-klassement met de leider gemarkeerd](assets/field-results.png)
+
+**Recent Results (PolyField)** — de laatste drie voltooide veldprestaties (naam, onderdeel, ronde en prestatie, met wind voor horizontale sprongen).
+
+![Recent Results (PolyField) — de laatste drie voltooide veldprestaties](assets/recent-results.png)
 
 ## Thema's, startnummers & clubafkortingen
 
