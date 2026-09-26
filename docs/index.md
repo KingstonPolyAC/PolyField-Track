@@ -129,7 +129,8 @@ Open the Layout Builder to design custom scoreboard layouts from widgets. Each l
 | Running Clock / Stopped Time | Live or frozen clock. |
 | Event Name / Wind | Current or result event name and wind. |
 | Custom Text / Logo / Time of Day | Static text, an image/logo, or the time. |
-| RAZA / Field Results | Para-athletics WPA points, and PolyField field-event results. |
+| RAZA Results | Para-athletics WPA points. |
+| Field Results / Recent Results / Jump Ruler (PolyField) | Live field-event displays fed by the PolyField Field server — see [Horizontal jump displays](#horizontal-jump-displays) below. |
 | Text / Screensaver / Line View / Clock overlays | The text banner, screensaver image/layout, photo finish, and full-screen clock (shown when the operator triggers the matching overlay). |
 | Record Overlay | Celebratory record cards (drag-positioned elements, per-element size). |
 | Countdown Overlay | Countdown to a target time with an editable caption. |
@@ -146,6 +147,34 @@ For a combined-events (multi-event) competition, the results table can show an e
 - **Non-finishers** — DNS athletes are not shown; DNF and DQ show no score.
 
 The time used for the lookup is the value displayed (already rounded to the timing precision), so the points match the official tables exactly.
+
+## Horizontal jump displays {#horizontal-jump-displays}
+
+Three widgets show live field-event data from a **PolyField Field server** on the same network. Add them from the **Results** group in the Layout Builder; each has an **IP address** and **Port** for the field server (default `192.168.0.90:8080`).
+
+### Jump Ruler (PolyField)
+
+A pit-side ruler for **long jump and triple jump** — ideal for a long, thin LED strip beside the runway (e.g. 500 mm × 4–6 m). It draws a distance scale with metre / 50 cm / 10 cm ticks, marks the leading three jumps, and shows the current jumper's details.
+
+![The Jump Ruler in the Layout Builder — the pit-anchored scale with the current jumper, previous jumper, top-3 pins and the competition average](assets/jump-ruler.png)
+
+- **Tag it to one event.** Pick the event from the **Event** dropdown (only *Horizontal Jumps* events are listed). Several rulers can run at once for different events, each tagged separately.
+- **Take-off board.** The scale is pit-anchored: enter the **ruler start** for long jump and for each triple-jump board (**7 / 9 / 11 / 13 m**, to 2 decimal places, e.g. `11.02`). The athlete's active board (from the feed) sets which start the ruler uses, so marks always land in the right place.
+- **Top-3 pins.** The leading three marks show as height-staggered pins (1st tallest, then 2nd and 3rd), with 1st always drawn in front. A mark outside the visible range shows as an **arrowhead** at the edge pointing its way.
+- **Average pin.** An optional **Avg** pin plots the competition average.
+- **Athlete panel.** Drag-position each piece — **current athlete**, current mark & wind, **previous athlete** with their mark & wind, current board and best of competition — and set each one's **caption, colour, size** and visibility. Lay them out as a top banner or a side panel.
+- **Athlete direction.** Choose **left → right** or **right → left** so the scale matches the way athletes run into the pit.
+- **The flow:** an athlete is selected → shown as *current* (no mark yet); their jump is measured → *current mark & wind* appear; the next athlete is selected → they become *current* and the last jumper moves to *previous*.
+
+### Field Results & Recent Results (PolyField)
+
+**Field Results (PolyField)** — a live standings board for field events (rank, athlete, club, event, mark, best), with the leader highlighted and fouls shown in red.
+
+![Field Results (PolyField) — live field-event standings with the leader highlighted](assets/field-results.png)
+
+**Recent Results (PolyField)** — the last three completed field performances (name, event, round and mark, with wind for horizontal jumps).
+
+![Recent Results (PolyField) — the last three completed field performances](assets/recent-results.png)
 
 ## Themes, bibs & club abbreviations
 
