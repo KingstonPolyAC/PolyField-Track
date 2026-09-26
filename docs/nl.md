@@ -284,3 +284,89 @@ Een tweede, onafhankelijke kopie van de **startlijst** voor betrouwbaarheid. Fin
 ## Downloaden & ondersteuning
 
 Download de nieuwste versie op [www.polyfield.co.uk](https://www.polyfield.co.uk) of via de [releases-pagina](https://github.com/KingstonPolyAC/PolyField-Track/releases). Ondersteuning: [support@polyfield.co.uk](mailto:support@polyfield.co.uk).
+
+## API-integratie {#api-integration}
+
+PolyField Track biedt een kleine **alleen-lezen HTTP + JSON-API** op **poort 3000**, op **hetzelfde lokale netwerk** als uw schermen. Het is dezelfde interface die de ingebouwde schermen gebruiken, dus alles op het lokale netwerk — een eigen scorebord, een statistiekendashboard, een streamingoverlay, de eigen bewegwijzering van een accommodatie — kan live uitslagen, de startlijst en de lopende klok rechtstreeks uit de app lezen. Verzoeken zijn eenvoudige `GET`s, antwoorden zijn JSON, er is geen authenticatie en CORS staat open, zodat een webpagina op het lokale netwerk de API direct kan aanroepen.
+
+De API is **bewust alleen voor het lokale netwerk** — de app stelt hem niet bloot aan internet. **Elke integratie via WAN of internet** (externe scoreborden, clouddiensten, een tweede accommodatie) **moet eerst met ons besproken worden** zodat het veilig gebeurt, meestal via een VPN of een beheerde reverse proxy in plaats van de poort voor de hele wereld open te zetten. Neem contact op via [support@polyfield.co.uk](mailto:support@polyfield.co.uk).
+
+**Basis-URL:** `http://<ip-van-track-pc>:3000` — het lokale netwerkadres van de pc staat in het paneel **Displays**, of via `GET /server-info`.
+
+| Methode en pad | Geeft terug |
+|---|---|
+| `GET /server-info` | Het lokale IP-adres van de pc. |
+| `GET /latest-lif` | De huidige uitslag (die op de schermen staat). `{}` als er geen is. |
+| `GET /all-lif` | Een array met alle recente uitslagen, nieuwste eerst. |
+| `GET /startlist` | De startlijst van het huidige onderdeel. |
+| `GET /clock-data` | De live lopende klok (wordt continu bijgewerkt). |
+
+### `GET /server-info`
+
+```json
+{ "lanIP": "192.168.0.137" }
+```
+
+### `GET /latest-lif` en `GET /all-lif`
+
+`/latest-lif` geeft één **uitslag**-object terug (`{}` als er niets geladen is); `/all-lif` geeft een **array** van hetzelfde object terug, nieuwste eerst. Velden:
+
+- `fileName` — naam van het bronbestand.
+- `eventName` — titel van het onderdeel zoals verstuurd door het tijdwaarnemingssysteem.
+- `wind` — windmeting met eenheid (bijv. `"0.6 m/s"`), of leeg.
+- `modifiedTime` — Unix-seconden van de laatste wijziging van de uitslag.
+- `competitors[]` — één regel per atleet: `place`, `id` (startnummer), `firstName`, `lastName`, `affiliation` (club/land), `time` (al afgerond/opgemaakt) en optioneel `recordFlag` (bijv. `"PB"`, `"W50 WR"`).
+
+```json
+{
+  "fileName": "race01.lif",
+  "eventName": "Men 100m Final",
+  "wind": "0.6 m/s",
+  "modifiedTime": 1790447000,
+  "competitors": [
+    { "place": "1", "id": "1001", "firstName": "Marcell", "lastName": "JACOBS",   "affiliation": "ITA", "time": "9.80", "recordFlag": "PB" },
+    { "place": "2", "id": "1002", "firstName": "Fred",    "lastName": "KERLEY",   "affiliation": "USA", "time": "9.84" },
+    { "place": "3", "id": "1003", "firstName": "Andre",   "lastName": "DE GRASSE", "affiliation": "CAN", "time": "9.89" }
+  ]
+}
+```
+
+### `GET /startlist`
+
+- `eventName`, `round`, `heat`, `eventNo` — identificatie van het onderdeel (elk kan leeg zijn).
+- `hasLanes` — `true` voor onderdelen met banen (baan), anders `false`.
+- `entries[]` — `lane` (baan), `id` (startnummer), `firstName`, `lastName`, `affiliation`.
+
+```json
+{
+  "eventName": "T1 Kestrel Club 75 Race 1 of 6",
+  "round": "",
+  "heat": "",
+  "eventNo": "",
+  "hasLanes": true,
+  "entries": [
+    { "lane": "1", "id": "164", "firstName": "Rocco",  "lastName": "Kothakota", "affiliation": "St Mary's Richmond AC" },
+    { "lane": "2", "id": "60",  "firstName": "Fabian", "lastName": "Higgins",   "affiliation": "Young Athletes Club (YAC)" }
+  ]
+}
+```
+
+### `GET /clock-data`
+
+De live klok van het tijdwaarnemingssysteem. Vraag hem op (ongeveer één keer per seconde) om een lopende klok aan te sturen. `state` is `armed` / `running` / `stopped` / `idle`; `serverNow` is de servertijd in Unix-milliseconden, zodat een client klokafwijking kan corrigeren.
+
+```json
+{
+  "state": "running",
+  "time": "9.42",
+  "eventName": "Men 100m Final",
+  "eventNo": "12",
+  "round": "1",
+  "heat": "3",
+  "wind": "+0.6",
+  "receivedAt": 1790447079000,
+  "serverNow": 1790447079466
+}
+```
+
+Uitslagen en de startlijst veranderen niet vaak — vraag ze elke 1–2 seconden op (of op verzoek); alleen `/clock-data` hoeft tijdens een lopende race vaak opgevraagd te worden.

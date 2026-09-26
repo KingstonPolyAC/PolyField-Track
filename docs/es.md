@@ -284,3 +284,89 @@ Una segunda copia independiente de la **lista de salida** para mayor fiabilidad.
 ## Descarga y soporte
 
 Descargue la última versión desde [www.polyfield.co.uk](https://www.polyfield.co.uk) o desde la [página de versiones](https://github.com/KingstonPolyAC/PolyField-Track/releases). Soporte: [support@polyfield.co.uk](mailto:support@polyfield.co.uk).
+
+## Integración mediante API {#api-integration}
+
+PolyField Track ofrece una pequeña **API HTTP + JSON de solo lectura** en el **puerto 3000**, en la **misma red local** que sus pantallas. Es la misma interfaz que usan las pantallas integradas, así que cualquier dispositivo de la red local — un marcador personalizado, un panel de estadísticas, una superposición para streaming, la señalización propia de una instalación — puede leer los resultados en directo, la lista de salida y el cronómetro en curso directamente desde la aplicación. Las peticiones son `GET` sencillos, las respuestas son JSON, no hay autenticación y CORS está abierto, por lo que una página web de la red local puede llamarla directamente.
+
+La API es **solo para la red local por diseño** — la aplicación no la expone a Internet. **Cualquier integración orientada a la WAN o a Internet** (marcadores remotos, servicios en la nube, una segunda instalación) **debe consultarse primero con nosotros** para hacerla de forma segura, normalmente mediante una VPN o un proxy inverso controlado en lugar de abrir el puerto al mundo. Contacte con [support@polyfield.co.uk](mailto:support@polyfield.co.uk).
+
+**URL base:** `http://<ip-del-pc-track>:3000` — la dirección de red local del PC aparece en el panel **Displays**, o mediante `GET /server-info`.
+
+| Método y ruta | Devuelve |
+|---|---|
+| `GET /server-info` | La IP de red local del PC. |
+| `GET /latest-lif` | El resultado actual (el que se muestra en pantalla). `{}` si no hay ninguno. |
+| `GET /all-lif` | Un array con todos los resultados recientes, del más reciente al más antiguo. |
+| `GET /startlist` | La lista de salida de la prueba actual. |
+| `GET /clock-data` | El cronómetro en directo (se actualiza continuamente). |
+
+### `GET /server-info`
+
+```json
+{ "lanIP": "192.168.0.137" }
+```
+
+### `GET /latest-lif` y `GET /all-lif`
+
+`/latest-lif` devuelve un objeto de **resultado** (`{}` si no hay nada cargado); `/all-lif` devuelve un **array** del mismo objeto, del más reciente al más antiguo. Campos:
+
+- `fileName` — nombre del archivo de origen.
+- `eventName` — título de la prueba tal como lo envía el sistema de cronometraje.
+- `wind` — lectura del viento con su unidad (p. ej. `"0.6 m/s"`), o vacío.
+- `modifiedTime` — segundos Unix de la última modificación del resultado.
+- `competitors[]` — una entrada por atleta: `place`, `id` (dorsal), `firstName`, `lastName`, `affiliation` (club/país), `time` (ya redondeado/formateado) y, opcionalmente, `recordFlag` (p. ej. `"PB"`, `"W50 WR"`).
+
+```json
+{
+  "fileName": "race01.lif",
+  "eventName": "Men 100m Final",
+  "wind": "0.6 m/s",
+  "modifiedTime": 1790447000,
+  "competitors": [
+    { "place": "1", "id": "1001", "firstName": "Marcell", "lastName": "JACOBS",   "affiliation": "ITA", "time": "9.80", "recordFlag": "PB" },
+    { "place": "2", "id": "1002", "firstName": "Fred",    "lastName": "KERLEY",   "affiliation": "USA", "time": "9.84" },
+    { "place": "3", "id": "1003", "firstName": "Andre",   "lastName": "DE GRASSE", "affiliation": "CAN", "time": "9.89" }
+  ]
+}
+```
+
+### `GET /startlist`
+
+- `eventName`, `round`, `heat`, `eventNo` — identificación de la prueba (cualquiera puede estar vacío).
+- `hasLanes` — `true` para pruebas por calles (pista), `false` en caso contrario.
+- `entries[]` — `lane` (calle), `id` (dorsal), `firstName`, `lastName`, `affiliation`.
+
+```json
+{
+  "eventName": "T1 Kestrel Club 75 Race 1 of 6",
+  "round": "",
+  "heat": "",
+  "eventNo": "",
+  "hasLanes": true,
+  "entries": [
+    { "lane": "1", "id": "164", "firstName": "Rocco",  "lastName": "Kothakota", "affiliation": "St Mary's Richmond AC" },
+    { "lane": "2", "id": "60",  "firstName": "Fabian", "lastName": "Higgins",   "affiliation": "Young Athletes Club (YAC)" }
+  ]
+}
+```
+
+### `GET /clock-data`
+
+El cronómetro en directo del sistema de cronometraje. Consúltelo (aproximadamente una vez por segundo) para mostrar un cronómetro en marcha. `state` es `armed` / `running` / `stopped` / `idle`; `serverNow` es la hora del servidor en milisegundos Unix, para que un cliente pueda corregir el desfase de reloj.
+
+```json
+{
+  "state": "running",
+  "time": "9.42",
+  "eventName": "Men 100m Final",
+  "eventNo": "12",
+  "round": "1",
+  "heat": "3",
+  "wind": "+0.6",
+  "receivedAt": 1790447079000,
+  "serverNow": 1790447079466
+}
+```
+
+Los resultados y la lista de salida cambian con poca frecuencia — consúltelos cada 1–2 segundos (o bajo demanda); solo `/clock-data` necesita consultas frecuentes mientras una carrera está en curso.
