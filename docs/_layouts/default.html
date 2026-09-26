@@ -98,6 +98,7 @@
   body[data-lang="fr"] #markdown-toc:before{content:"Sommaire"}
   body[data-lang="es"] #markdown-toc:before{content:"Contenido"}
   body[data-lang="nl"] #markdown-toc:before{content:"Inhoud"}
+  body[data-lang="pt"] #markdown-toc:before{content:"Índice"}
   #markdown-toc a{color:var(--muted)}
   #markdown-toc a:hover{color:var(--text)}
 
@@ -109,6 +110,7 @@
 {% when 'fr' %}{% assign subtitle = 'Aide et manuel' %}
 {% when 'es' %}{% assign subtitle = 'Ayuda y manual' %}
 {% when 'nl' %}{% assign subtitle = 'Help &amp; handleiding' %}
+{% when 'pt' %}{% assign subtitle = 'Ajuda e manual' %}
 {% else %}{% assign subtitle = 'Help &amp; User Manual' %}
 {% endcase %}
 <body data-lang="{{ page.lang | default: 'en' }}">
@@ -125,6 +127,7 @@
         <a href="{{ '/fr/' | relative_url }}"{% if page.lang == 'fr' %} class="on"{% endif %}>FR</a>
         <a href="{{ '/es/' | relative_url }}"{% if page.lang == 'es' %} class="on"{% endif %}>ES</a>
         <a href="{{ '/nl/' | relative_url }}"{% if page.lang == 'nl' %} class="on"{% endif %}>NL</a>
+        <a href="{{ '/pt/' | relative_url }}"{% if page.lang == 'pt' %} class="on"{% endif %}>PT</a>
       </nav>
       <button id="themeBtn" class="theme-btn" type="button" title="Toggle light / dark" aria-label="Toggle light or dark theme">☾</button>
     </div>
