@@ -131,7 +131,7 @@ Ouvrez le Constructeur de mise en page pour concevoir des tableaux d'affichage p
 | Nom de l'épreuve / Vent | Nom et vent de l'épreuve en cours ou du résultat. |
 | Texte personnalisé / Logo / Heure du jour | Texte statique, une image/un logo, ou l'heure. |
 | Résultats RAZA | Points WPA de para-athlétisme. |
-| Concours PolyField (Field Results / Recent Results / Jump Ruler) | Affichages en direct des concours, alimentés par le serveur PolyField Field — voir [Affichages des sauts horizontaux](#horizontal-jump-displays) ci-dessous. |
+| Concours PolyField (Field Results / Recent Results / Jump Ruler / Vertical Jumps) | Affichages en direct des concours, alimentés par le serveur PolyField Field — regroupés sous **PolyField Server** dans la palette. Voir [Affichages des sauts horizontaux](#horizontal-jump-displays) et [Affichages des sauts verticaux](#vertical-jump-displays) ci-dessous. |
 | Superpositions Texte / Économiseur / Vue de ligne / Horloge | La bannière de texte, l'image/mise en page de l'économiseur, la photo-finish et l'horloge plein écran (affichées quand l'opérateur déclenche la superposition correspondante). |
 | Superposition Record | Cartes de célébration des records (éléments positionnables par glisser-déposer, taille par élément). |
 | Superposition Compte à rebours | Décompte jusqu'à une heure cible avec une légende modifiable. |
@@ -151,7 +151,7 @@ Le temps utilisé pour la recherche est la valeur affichée (déjà arrondie à 
 
 ## Affichages des sauts horizontaux {#horizontal-jump-displays}
 
-Trois widgets affichent en direct les données de concours d'un **serveur PolyField Field** sur le même réseau. Ajoutez-les depuis le groupe **Résultats** du Constructeur de mise en page ; chacun possède une **adresse IP** et un **port** pour le serveur (par défaut `192.168.0.90:8080`).
+Ces widgets affichent en direct les données de concours d'un **serveur PolyField Field** sur le même réseau. Ajoutez-les depuis le groupe **PolyField Server** du Constructeur de mise en page ; chacun possède une **adresse IP** et un **port** pour le serveur (par défaut `192.168.0.90:8080`).
 
 ### Jump Ruler (PolyField)
 
@@ -176,6 +176,35 @@ Une règle placée au bord de la fosse pour le **saut en longueur et le triple s
 **Recent Results (PolyField)** — les trois dernières performances de concours (nom, épreuve, tour et marque, avec le vent pour les sauts horizontaux).
 
 ![Recent Results (PolyField) — les trois dernières performances de concours](assets/recent-results.png)
+
+## Affichages des sauts verticaux {#vertical-jump-displays}
+
+**Vertical Jumps (PolyField)** affiche un concours de **saut en hauteur ou de saut à la perche**, associé à une épreuve (seules les épreuves *Vertical Jumps* apparaissent dans son menu **Épreuve**). Il se trouve dans le groupe **PolyField Server** de la palette et propose deux styles.
+
+### Avancé — tableau de qualification
+
+Une barre horizontale, portant la hauteur en cours, divise l'affichage comme un tableau de qualification.
+
+![Vertical Jumps (PolyField), style avancé — la barre indiquant la hauteur en cours, les athlètes ayant franchi au-dessus avec un point vert et l'athlète éliminé sur une ligne rouge](assets/vertical-jumps.jpg)
+
+- Les athlètes qui doivent encore franchir se placent **sous** la barre. Lorsqu'un athlète **franchit**, il passe **au-dessus** avec un **point vert** ; un **échec** affiche un **point rouge** et il reste en dessous ; un athlète **éliminé** a une **ligne rouge**.
+- Lorsque la **hauteur change**, la barre apparaît avec une animation, tous les athlètes reviennent sous la barre et les éliminés disparaissent. Les athlètes qui **passent** la hauteur ne s'affichent pas.
+- La position verticale de la barre suit le rapport entre franchis et non-franchis ; s'il y a plus d'athlètes que de lignes, la liste **défile** pour tous les montrer.
+- Les données sont alignées en colonnes (place · nom · essais · indicateur) pour rester nettes quelle que soit la longueur des noms.
+
+### Simplifié — carte de l'état en cours
+
+Une seule carte montrant l'athlète en action : la hauteur en cours, son nom, ses essais à cette hauteur et sa série complète.
+
+![Vertical Jumps (PolyField), style simplifié — la hauteur en cours, l'athlète et les essais](assets/vertical-jumps-simple.jpg)
+
+Chaque élément — nom de l'épreuve, hauteur, athlète, essais, série, et en option place / meilleure / dossard — est **positionné par glisser-déposer** avec son propre **libellé, sa couleur, sa taille** et sa visibilité, comme le panneau du Jump Ruler.
+
+### Options communes
+
+- **Aucune hauteur définie.** Avant l'annonce d'une hauteur (elle afficherait `0,00 m`), le widget montre le **nom de l'épreuve et un logo sponsor** à la place.
+- **Logo sponsor.** Facultatif — affiché sur cette carte d'attente et (en mode avancé) sous la barre pendant le changement de hauteur.
+- **Configurable** — lignes, taille du texte et police, couleurs (barre, franchi, échec, éliminé, accent) et durée d'apparition de la barre.
 
 ## Thèmes, dossards et abréviations de clubs
 

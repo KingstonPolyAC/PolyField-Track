@@ -131,7 +131,7 @@ Abra o Construtor de esquemas para desenhar quadros de resultados personalizados
 | Event Name / Wind | Nome e vento da prova atual ou do resultado. |
 | Custom Text / Logo / Time of Day | Texto estático, uma imagem/logótipo, ou a hora. |
 | RAZA Results | Pontos WPA de para-atletismo. |
-| Field Results / Recent Results / Jump Ruler (PolyField) | Ecrãs de concursos ao vivo, alimentados pelo servidor PolyField Field — ver [Ecrãs de saltos horizontais](#horizontal-jump-displays) abaixo. |
+| Field Results / Recent Results / Jump Ruler / Vertical Jumps (PolyField) | Ecrãs de concursos ao vivo, alimentados pelo servidor PolyField Field — agrupados em **PolyField Server** na paleta. Ver [Ecrãs de saltos horizontais](#horizontal-jump-displays) e [Ecrãs de saltos verticais](#vertical-jump-displays) abaixo. |
 | Sobreposições Text / Screensaver / Line View / Clock | A faixa de texto, a imagem/esquema de proteção de ecrã, o photo-finish e o relógio em ecrã inteiro (mostrados quando o operador aciona a sobreposição correspondente). |
 | Record Overlay | Cartões de celebração de recordes (elementos posicionáveis por arrasto, tamanho por elemento). |
 | Countdown Overlay | Contagem decrescente até uma hora-alvo com uma legenda editável. |
@@ -151,7 +151,7 @@ O tempo usado na pesquisa é o valor apresentado (já arredondado à precisão d
 
 ## Ecrãs de saltos horizontais {#horizontal-jump-displays}
 
-Três widgets mostram ao vivo dados de concursos a partir de um **servidor PolyField Field** na mesma rede. Adicione-os a partir do grupo **Resultados** no Construtor de esquemas; cada um tem um **endereço IP** e uma **porta** para o servidor (predefinição `192.168.0.90:8080`).
+Estes widgets mostram ao vivo dados de concursos a partir de um **servidor PolyField Field** na mesma rede. Adicione-os a partir do grupo **PolyField Server** no Construtor de esquemas; cada um tem um **endereço IP** e uma **porta** para o servidor (predefinição `192.168.0.90:8080`).
 
 ### Jump Ruler (PolyField)
 
@@ -176,6 +176,35 @@ Uma régua junto à caixa de saltos para **salto em comprimento e triplo salto**
 **Recent Results (PolyField)** — as três últimas marcas de concursos concluídas (nome, prova, ronda e marca, com vento nos saltos horizontais).
 
 ![Recent Results (PolyField) — as três últimas marcas de concursos concluídas](assets/recent-results.png)
+
+## Ecrãs de saltos verticais {#vertical-jump-displays}
+
+**Vertical Jumps (PolyField)** mostra um concurso de **salto em altura ou salto com vara**, associado a uma prova (apenas as provas *Vertical Jumps* aparecem no menu **Prova**). Está no grupo **PolyField Server** da paleta e tem dois estilos.
+
+### Avançado — quadro de qualificação
+
+Uma barra horizontal, com a altura atual, divide o ecrã como um quadro de qualificação.
+
+![Vertical Jumps (PolyField), estilo avançado — a barra com a altura atual, os atletas que transpuseram acima com um ponto verde e o atleta eliminado numa linha vermelha](assets/vertical-jumps.jpg)
+
+- Os atletas que ainda têm de transpor ficam **abaixo** da barra. Quando um **transpõe**, passa para **cima** com um **ponto verde**; uma **falha** mostra um **ponto vermelho** e permanece abaixo; um atleta **eliminado** tem uma **linha vermelha**.
+- Quando a **altura muda**, a barra surge com uma animação, todos os atletas voltam para baixo da barra e os eliminados desaparecem. Os atletas que **passam** a altura não são mostrados.
+- A posição vertical da barra acompanha a proporção entre transpostos e não transpostos; se houver mais atletas do que linhas, a lista **roda** para mostrar todos.
+- Os dados ficam alinhados em colunas (lugar · nome · tentativas · marcador) para se manterem organizados independentemente do comprimento dos nomes.
+
+### Simplificado — cartão do estado atual
+
+Um único cartão que mostra o atleta em ação: a altura atual, o seu nome, as suas tentativas nessa altura e a sua série completa.
+
+![Vertical Jumps (PolyField), estilo simplificado — a altura atual, o atleta e as tentativas](assets/vertical-jumps-simple.jpg)
+
+Cada elemento — nome da prova, altura, atleta, tentativas, série, e opcionalmente lugar / melhor / dorsal — é **posicionado por arrastamento** com a sua própria **legenda, cor, tamanho** e visibilidade, como o painel do Jump Ruler.
+
+### Opções comuns
+
+- **Sem altura definida.** Antes de uma altura ser anunciada (mostraria `0,00 m`), o widget mostra o **nome da prova e um logótipo de patrocinador** em vez disso.
+- **Logótipo de patrocinador.** Opcional — mostrado nesse cartão de espera e (no estilo avançado) sob a barra durante a mudança de altura.
+- **Configurável** — linhas, tamanho do texto e tipo de letra, cores (barra, transposto, falha, eliminado, destaque) e a duração da animação da barra.
 
 ## Temas, dorsais e abreviaturas de clubes
 

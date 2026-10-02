@@ -131,7 +131,7 @@ Open de Lay-outbouwer om aangepaste scoreborden te ontwerpen met widgets. Elke l
 | Onderdeelnaam / Wind | Naam en wind van het huidige onderdeel of resultaat. |
 | Aangepaste tekst / Logo / Tijd van de dag | Statische tekst, een afbeelding/logo, of de tijd. |
 | RAZA-klassementen | WPA-punten voor para-atletiek. |
-| PolyField-veldwidgets (Field Results / Recent Results / Jump Ruler) | Live veldonderdeel-weergaven, gevoed door de PolyField Field-server — zie [Weergaven voor horizontale sprongen](#horizontal-jump-displays) hieronder. |
+| PolyField-veldwidgets (Field Results / Recent Results / Jump Ruler / Vertical Jumps) | Live veldonderdeel-weergaven, gevoed door de PolyField Field-server — gegroepeerd onder **PolyField Server** in het palet. Zie [Weergaven voor horizontale sprongen](#horizontal-jump-displays) en [Weergaven voor verticale sprongen](#vertical-jump-displays) hieronder. |
 | Overlays Tekst / Schermbeveiliging / Lijnweergave / Klok | De tekstbanner, schermbeveiligingsafbeelding/-lay-out, foto-finish en schermvullende klok (getoond wanneer de operator de bijbehorende overlay activeert). |
 | Record-overlay | Feestelijke recordkaarten (versleepbare elementen, grootte per element). |
 | Aftelklok-overlay | Aftellen naar een doeltijd met een bewerkbaar bijschrift. |
@@ -151,7 +151,7 @@ De tijd die voor het opzoeken wordt gebruikt is de weergegeven waarde (al afgero
 
 ## Weergaven voor horizontale sprongen {#horizontal-jump-displays}
 
-Drie widgets tonen live veldonderdeelgegevens van een **PolyField Field-server** op hetzelfde netwerk. Voeg ze toe vanuit de groep **Resultaten** in de Lay-outbouwer; elk heeft een **IP-adres** en **poort** voor de server (standaard `192.168.0.90:8080`).
+Deze widgets tonen live veldonderdeelgegevens van een **PolyField Field-server** op hetzelfde netwerk. Voeg ze toe vanuit de groep **PolyField Server** in de Lay-outbouwer; elk heeft een **IP-adres** en **poort** voor de server (standaard `192.168.0.90:8080`).
 
 ### Jump Ruler (PolyField)
 
@@ -176,6 +176,35 @@ Een liniaal langs de bak voor **verspringen en hinkstapspringen** — ideaal voo
 **Recent Results (PolyField)** — de laatste drie voltooide veldprestaties (naam, onderdeel, ronde en prestatie, met wind voor horizontale sprongen).
 
 ![Recent Results (PolyField) — de laatste drie voltooide veldprestaties](assets/recent-results.png)
+
+## Weergaven voor verticale sprongen {#vertical-jump-displays}
+
+**Vertical Jumps (PolyField)** toont een **hoogspring- of polsstokhoogspringwedstrijd**, gekoppeld aan één onderdeel (alleen *Vertical Jumps*-onderdelen verschijnen in het menu **Onderdeel**). Het staat in de paletgroep **PolyField Server** en heeft twee stijlen.
+
+### Geavanceerd — kwalificatiebord
+
+Een horizontale lat, met de huidige hoogte erop, verdeelt de weergave als een kwalificatiebord.
+
+![Vertical Jumps (PolyField), geavanceerde stijl — de lat met de huidige hoogte, geslaagde atleten erboven met een groene stip en de uitgeschakelde atleet op een rode rij](assets/vertical-jumps.jpg)
+
+- Atleten die nog moeten slagen staan **onder** de lat. Wie **slaagt** gaat **boven** de lat met een **groene stip**; een **mislukte** poging toont een **rode stip** en blijft eronder; een **uitgeschakelde** atleet krijgt een **rode rij**.
+- Wanneer de **hoogte verandert** verschijnt de lat met een animatie, gaan alle atleten terug onder de lat en vallen de uitgeschakelden weg. Atleten die de hoogte **overslaan** worden niet getoond.
+- De verticale positie van de lat volgt de verhouding tussen geslaagd en nog-niet-geslaagd; bij meer atleten dan rijen **roteert** de lijst zodat iedereen wordt getoond.
+- De gegevens staan uitgelijnd in kolommen (plaats · naam · pogingen · markering) zodat het netjes blijft ongeacht de lengte van de namen.
+
+### Vereenvoudigd — kaart met huidige stand
+
+Eén kaart met de atleet die nu springt: de huidige hoogte, de naam, de pogingen op die hoogte en de volledige reeks.
+
+![Vertical Jumps (PolyField), vereenvoudigde stijl — de huidige hoogte, atleet en pogingen](assets/vertical-jumps-simple.jpg)
+
+Elk onderdeel — onderdeelnaam, hoogte, atleet, pogingen, reeks, en optioneel plaats / beste / startnummer — wordt met **slepen gepositioneerd** met een eigen **bijschrift, kleur, grootte** en zichtbaarheid, net als het paneel van de Jump Ruler.
+
+### Gedeelde opties
+
+- **Geen hoogte ingesteld.** Voordat een hoogte is aangekondigd (het zou `0,00 m` tonen), toont de widget in plaats daarvan de **onderdeelnaam en een sponsorlogo**.
+- **Sponsorlogo.** Optioneel — getoond op die wachtkaart en (in de geavanceerde stijl) onder de lat tijdens de hoogtewissel.
+- **Configureerbaar** — rijen, tekstgrootte en lettertype, kleuren (lat, geslaagd, mislukt, uitgeschakeld, accent) en de duur van de latanimatie.
 
 ## Thema's, startnummers & clubafkortingen
 

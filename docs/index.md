@@ -130,7 +130,7 @@ Open the Layout Builder to design custom scoreboard layouts from widgets. Each l
 | Event Name / Wind | Current or result event name and wind. |
 | Custom Text / Logo / Time of Day | Static text, an image/logo, or the time. |
 | RAZA Results | Para-athletics WPA points. |
-| Field Results / Recent Results / Jump Ruler (PolyField) | Live field-event displays fed by the PolyField Field server — see [Horizontal jump displays](#horizontal-jump-displays) below. |
+| Field Results / Recent Results / Jump Ruler / Vertical Jumps (PolyField) | Live field-event displays fed by the PolyField Field server — grouped under **PolyField Server** in the palette. See [Horizontal jump displays](#horizontal-jump-displays) and [Vertical jump displays](#vertical-jump-displays) below. |
 | Text / Screensaver / Line View / Clock overlays | The text banner, screensaver image/layout, photo finish, and full-screen clock (shown when the operator triggers the matching overlay). |
 | Record Overlay | Celebratory record cards (drag-positioned elements, per-element size). |
 | Countdown Overlay | Countdown to a target time with an editable caption. |
@@ -150,7 +150,7 @@ The time used for the lookup is the value displayed (already rounded to the timi
 
 ## Horizontal jump displays {#horizontal-jump-displays}
 
-Three widgets show live field-event data from a **PolyField Field server** on the same network. Add them from the **Results** group in the Layout Builder; each has an **IP address** and **Port** for the field server (default `192.168.0.90:8080`).
+These widgets show live field-event data from a **PolyField Field server** on the same network. Add them from the **PolyField Server** group in the Layout Builder; each has an **IP address** and **Port** for the field server (default `192.168.0.90:8080`).
 
 ### Jump Ruler (PolyField)
 
@@ -175,6 +175,35 @@ A pit-side ruler for **long jump and triple jump** — ideal for a long, thin LE
 **Recent Results (PolyField)** — the last three completed field performances (name, event, round and mark, with wind for horizontal jumps).
 
 ![Recent Results (PolyField) — the last three completed field performances](assets/recent-results.png)
+
+## Vertical jump displays {#vertical-jump-displays}
+
+**Vertical Jumps (PolyField)** shows a **high jump or pole vault** competition, tagged to one event (only *Vertical Jumps* events appear in its **Event** dropdown). It's in the **PolyField Server** palette group and has two styles.
+
+### Advanced — qualifying board
+
+A horizontal bar, labelled with the current height, divides the display like a qualifying board.
+
+![Vertical Jumps (PolyField), advanced style — the bar labelled with the current height, cleared athletes above with a green dot and the eliminated athlete on a red row](assets/vertical-jumps.jpg)
+
+- Athletes still to clear sit **below** the bar. When one **clears** they rise **above** it with a **green dot**; a **failed** attempt shows a **red dot** and they stay below; an athlete **out of the competition** has a **red row**.
+- When the **height changes** the bar reveals with an animation, every athlete resets below it, and the eliminated drop off. Athletes who **pass** the height don't appear.
+- The bar's vertical position tracks the ratio of cleared to not-yet-cleared, and if more athletes are in than rows, the list **rotates** so everyone is shown.
+- The data lines up in columns (place · name · attempts · marker) so it stays tidy whatever the name lengths.
+
+### Simplified — current-state card
+
+A single card showing the athlete up now: the current height, their name, their attempts at that height and their full series.
+
+![Vertical Jumps (PolyField), simplified style — the current height, athlete and attempts](assets/vertical-jumps-simple.jpg)
+
+Each piece — event name, height, athlete, attempts, series, and optional place / best / bib — is **drag-positioned** with its own **caption, colour, size** and visibility, like the Jump Ruler's panel.
+
+### Shared options
+
+- **No height set.** Before a bar height is announced (it would read `0.00 m`), the widget shows the **event name and a sponsor logo** instead.
+- **Sponsor logo.** Optional — shown on that idle card, and (advanced) under the bar during the height change.
+- **Configurable** — rows, text size and font, the colours (bar, cleared, failed, out, accent) and the bar-reveal duration.
 
 ## Themes, bibs & club abbreviations
 
